@@ -1,0 +1,26 @@
+name:           GoreAndAsh
+version:        0.1
+cabal-version:  >= 1.2
+build-type:     Simple
+author:         ncrashed
+license:        GPL-3
+copyright:      2013 Anton Gushcha
+license-file:   ./LICENSE
+maintainer:     ncrashed@gmail.com
+
+executable GoreAndAsh-Client
+  build-depends:   base >= 4
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  
+                   src/Client,
+                   src/Shared
+  main-is:         Main.hs
+
+executable GoreAndAsh-Server
+  build-depends:   base >= 4
+  ghc-options:     -Wall -rtsopts
+  hs-source-dirs:  
+                   src/Server, 
+                   src/Shared
+  main-is:         Main.hs
+
