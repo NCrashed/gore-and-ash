@@ -20,5 +20,5 @@ module Server.Game.System(
 import Control.Distributed.Process
 
 initGameSystem :: ProcessId -> Process ProcessId
-initGameSystem rootId = spawnLocal $ do
+initGameSystem _ = spawnLocal $ do
     return ()

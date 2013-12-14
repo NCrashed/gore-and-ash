@@ -19,7 +19,6 @@ import Control.Distributed.Process
 import Control.Distributed.Process.Node
 import Network.Transport.Chan
 import Control.Monad (forever)
-import Control.Concurrent (threadDelay)
 import System.Exit (exitSuccess)
 
 import Server.Network.System
@@ -36,6 +35,6 @@ main = do
     node <- newLocalNode localTransport initRemoteTable
     runProcess node $ do
         rootId <- getSelfPid
-        gameSystemId <- initGameSystem rootId
-        networkSystemId <- initNetworkSystem rootId
+        _ <- initGameSystem rootId
+        _ <- initNetworkSystem rootId
         forever $ receiveWait [match exitMsg]

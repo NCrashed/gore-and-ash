@@ -26,7 +26,7 @@ import Data.ByteString.Char8
 import Control.Monad
 
 initNetworkSystem :: Local.ProcessId -> Local.Process Local.ProcessId
-initNetworkSystem rootId = Local.spawnLocal $ Local.liftIO $ withSocketsDo $ do
+initNetworkSystem _ = Local.spawnLocal $ Local.liftIO $ withSocketsDo $ do
    [host, port, serverAddr] <- getArgs
    Right transport <- createTransport host port defaultTCPParameters
    Right endpoint  <- newEndPoint transport

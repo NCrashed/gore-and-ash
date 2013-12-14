@@ -27,7 +27,7 @@ import Control.Exception
 import System.Environment
 
 initNetworkSystem :: Local.ProcessId -> Local.Process Local.ProcessId
-initNetworkSystem rootId = Local.spawnLocal $ Local.liftIO $ withSocketsDo $ do
+initNetworkSystem _ = Local.spawnLocal $ Local.liftIO $ withSocketsDo $ do
   [host, port]    <- getArgs
   serverDone      <- newEmptyMVar
   Right transport <- createTransport host port defaultTCPParameters

@@ -7,6 +7,7 @@ license:        GPL-3
 copyright:      2013 Anton Gushcha
 license-file:   ./LICENSE
 maintainer:     ncrashed@gmail.com
+data-files:     assets/textures/planks.jpg
 
 executable GoreAndAsh-Client
   build-depends:   
@@ -16,7 +17,11 @@ executable GoreAndAsh-Client
                    network >=2.4.1 && <2.5,
                    bytestring >=0.10.0 && <0.11,
                    network-transport >=0.3.0 && <0.4,
-                   network-transport-inmemory >=0.3.0 && <0.4
+                   network-transport-inmemory >=0.3.0 && <0.4,
+                   GLUT >=2.5.0 && <2.6,
+                   GPipe >=1.4.1 && <1.5,
+                   GPipe-TextureLoad >=1.0.4 && <1.1,
+                   Vec >=1.0.1 && <1.1
   ghc-options:     -Wall -rtsopts
   main-is:         Main.hs
   hs-source-dirs:  source/client
