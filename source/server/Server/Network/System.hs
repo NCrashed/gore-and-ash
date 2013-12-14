@@ -13,18 +13,21 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Main(main) where
-
+module Server.Network.System(
+     initNetworkSystem
+    ) where
+    
 import Network.Socket (withSocketsDo)
 import Network.Transport
 import Network.Transport.TCP (createTransport, defaultTCPParameters)
+import qualified Control.Distributed.Process as Local
 import Control.Concurrent
 import Data.Map
 import Control.Exception
 import System.Environment
 
-main::IO()
-main = withSocketsDo $ do 
+initNetworkSystem :: Local.ProcessId -> Local.Process Local.ProcessId
+initNetworkSystem rootId = Local.spawnLocal $ Local.liftIO $ withSocketsDo $ do
   [host, port]    <- getArgs
   serverDone      <- newEmptyMVar
   Right transport <- createTransport host port defaultTCPParameters
@@ -67,5 +70,4 @@ p `onCtrlC` q = catchJust isUserInterrupt p ( const $ q >> p `onCtrlC` q )
     where
         isUserInterrupt :: AsyncException -> Maybe ()
         isUserInterrupt UserInterrupt = Just ()
-        isUserInterrupt _             = Nothing                     
-                
+        isUserInterrupt _             = Nothing           

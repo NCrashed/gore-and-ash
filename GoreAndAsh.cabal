@@ -15,12 +15,11 @@ executable GoreAndAsh-Client
                    network-transport-tcp >=0.3.1 && <0.4,
                    network >=2.4.1 && <2.5,
                    bytestring >=0.10.0 && <0.11,
-                   network-transport >=0.3.0 && <0.4
+                   network-transport >=0.3.0 && <0.4,
+                   network-transport-inmemory >=0.3.0 && <0.4
   ghc-options:     -Wall -rtsopts
-  hs-source-dirs:  
-                   src/Client,
-                   src/Shared
   main-is:         Main.hs
+  hs-source-dirs:  source/client
 
 executable GoreAndAsh-Server
   build-depends:   
@@ -28,10 +27,9 @@ executable GoreAndAsh-Server
                    distributed-process >=0.4.2 && <0.5,
                    network-transport-tcp >=0.3.1 && <0.4,
                    network >=2.4.1 && <2.5,
-                   containers >=0.5.0 && <0.6
+                   containers >=0.5.0 && <0.6,
+                   network-transport-inmemory >=0.3.0 && <0.4
   ghc-options:     -Wall -rtsopts
-  hs-source-dirs:  
-                   src/Server, 
-                   src/Shared
   main-is:         Main.hs
+  hs-source-dirs:  source/server
 
