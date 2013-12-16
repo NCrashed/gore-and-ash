@@ -33,7 +33,9 @@ import Graphics.UI.GLUT(
     , getArgsAndInitialize
     , ($=))
 
-import Client.Graphics.PolyCube
+--import Client.Graphics.PolyCube
+import Client.Graphics.Boxed.Chunk
+import Game.Boxed.Chunk
 
 initGraphicsSystem :: ProcessId -> Process ProcessId
 initGraphicsSystem _ = spawnLocal $ liftIO $ do
@@ -47,7 +49,10 @@ renderFrame :: Texture2D RGBFormat -> IORef Float -> Vec2 Int -> IO (FrameBuffer
 renderFrame tex angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
-    return $ cubeFrameBuffer tex angle size
+    --return $ cubeFrameBuffer tex angle size
+    return $ chunkFrameBuffer tex chunk angle size
+    where
+        Just chunk = chunkFromList 3 $ replicate 9 1 ++ replicate 9 0 ++ replicate 9 1
     
 initWindow :: Window -> IO ()
 initWindow win = idleCallback $= Just (postRedisplay (Just win) >> yield)
