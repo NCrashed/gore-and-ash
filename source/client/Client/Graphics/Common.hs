@@ -30,8 +30,8 @@ emptyFrameBuffer :: FrameBuffer RGBFormat () ()
 emptyFrameBuffer = newFrameBufferColor (RGB 0)
     
 enlight :: Texture2D RGBFormat -> (Vec3 (Fragment Float), Vec2 (Fragment Float)) -> Color RGBFormat (Fragment Float)
-enlight tex (normv, uv) = RGB (c * vec (normv `dot` toGPU (0:.0:.1:.())))
-    where RGB c = sample (Sampler Linear Wrap) tex uv
+enlight tex (normv, uv) = RGB (toGPU (0:.0.45:.1:.()) * vec (normv `dot` toGPU (0:.0.45:.1:.())))
+    --where RGB c = sample (Sampler Linear Wrap) tex uv
     
 transform :: Float -> Vec2 Int -> (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float)) -> (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
 transform angle (width:.height:.()) (pos, normv, uv) = (transformedPos, (transformedNorm, uv))

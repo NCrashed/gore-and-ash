@@ -52,7 +52,11 @@ renderFrame tex angleRef size = do
     --return $ cubeFrameBuffer tex angle size
     return $ chunkFrameBuffer tex chunk angle size
     where
-        Just chunk = chunkFromList 3 $ replicate 9 1 ++ replicate 9 0 ++ replicate 9 1
+        --Just chunk = chunkFromList 4 $ replicate 16 1 ++ replicate 16 0 ++ replicate 16 1 ++ replicate 16 1
+        Just chunk = chunkFromList 4 $ [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0
+                                       ,1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1
+                                       ,0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+                                       ,0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1]
     
 initWindow :: Window -> IO ()
 initWindow win = idleCallback $= Just (postRedisplay (Just win) >> yield)
