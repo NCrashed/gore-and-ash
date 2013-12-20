@@ -56,11 +56,14 @@ cubeUvCoords = [0:.0:.(), 0:.1:.(), 1:.0:.(), 1:.1:.()]
 transformedCube :: Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
 transformedCube angle size = fmap (transform angle size) cube
     
-rasterizedCube :: Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float))
-rasterizedCube angle size = rasterizeFront $ transformedCube angle size
+rasterizedCube :: Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
+rasterizedCube angle size = rasterizeFront $ fmap storeDepth $ transformedCube angle size
+    where
+        storeDepth (posv@(_:._:.depth:.w:.()), (normv, uv)) = (posv, (normv, uv ,depth/w))
 
-litCube :: Texture2D RGBFormat -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float))
+
+litCube :: Texture2D RGBFormat -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
 litCube tex angle size = fmap (enlight tex) $ rasterizedCube angle size
     
-cubeFrameBuffer :: Texture2D RGBFormat -> Float -> Vec2 Int -> FrameBuffer RGBFormat () ()
+cubeFrameBuffer :: Texture2D RGBFormat -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 cubeFrameBuffer tex angle size = paintSolid (litCube tex angle size) emptyFrameBuffer

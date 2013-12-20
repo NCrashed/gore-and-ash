@@ -27,15 +27,17 @@ import Client.Graphics.Common
 import Client.Graphics.PolyCube
 import Game.Boxed.Chunk
 
-chunkFrameBuffer :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat () ()
+chunkFrameBuffer :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer atlas chunk angle size = paintSolid (litChunk atlas chunk angle size) emptyFrameBuffer
 
-litChunk :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float))
+litChunk :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
 litChunk atlas chunk angle size = fmap (enlight atlas) $ rasterizedChunk chunk angle size
     
-rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float))
-rasterizedChunk chunk angle size = rasterizeFront $ transformedChunk chunk angle size
-
+rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
+rasterizedChunk chunk angle size = fmap storeDepth $ rasterizeFront $ transformedChunk chunk angle size
+    where
+        storeDepth (normv, uv) = (normv, uv , fragDepth) 
+        
 transformedChunk :: BoxedChunk -> Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
 transformedChunk chunk angle size = fmap (transform angle size) $ chunkTriangles chunk
     

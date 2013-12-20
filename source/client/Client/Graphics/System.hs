@@ -45,7 +45,7 @@ initGraphicsSystem _ = spawnLocal $ liftIO $ do
     newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderFrame tex angleRef) initWindow
     mainLoop
     
-renderFrame :: Texture2D RGBFormat -> IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat () ())
+renderFrame :: Texture2D RGBFormat -> IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat ())
 renderFrame tex angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
@@ -53,7 +53,7 @@ renderFrame tex angleRef size = do
     return $ chunkFrameBuffer tex chunk angle size
     where
         --Just chunk = chunkFromList 4 $ replicate 16 1 ++ replicate 16 0 ++ replicate 16 1 ++ replicate 16 1
-        Just chunk = chunkFromList 4 $ [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0
+        Just chunk = chunkFromList 4   [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0
                                        ,1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1
                                        ,0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
                                        ,0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1]

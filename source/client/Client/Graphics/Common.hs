@@ -23,14 +23,14 @@ module Client.Graphics.Common(
 import Graphics.GPipe
 import Data.Vec as Vec
     
-paintSolid :: FragmentStream (Color RGBFormat (Fragment Float)) -> FrameBuffer RGBFormat () () -> FrameBuffer RGBFormat () ()
-paintSolid = paintColor NoBlending (RGB $ vec True)
+paintSolid :: FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth) -> FrameBuffer RGBFormat DepthFormat () -> FrameBuffer RGBFormat DepthFormat ()
+paintSolid = paintColorDepth Less True NoBlending (RGB $ vec True)
 
-emptyFrameBuffer :: FrameBuffer RGBFormat () ()
-emptyFrameBuffer = newFrameBufferColor (RGB 0)
+emptyFrameBuffer :: FrameBuffer RGBFormat DepthFormat ()
+emptyFrameBuffer = newFrameBufferColorDepth (RGB 0) 100
     
-enlight :: Texture2D RGBFormat -> (Vec3 (Fragment Float), Vec2 (Fragment Float)) -> Color RGBFormat (Fragment Float)
-enlight tex (normv, uv) = RGB (toGPU (0:.0.45:.1:.()) * vec (normv `dot` toGPU (0:.0.45:.1:.())))
+enlight :: Texture2D RGBFormat -> (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth) -> (Color RGBFormat (Fragment Float), FragmentDepth)
+enlight _ (normv, _, depth) = (RGB (toGPU (0:.0.45:.1:.()) * vec (normv `dot` toGPU (0:.0.45:.1:.()))), depth)
     --where RGB c = sample (Sampler Linear Wrap) tex uv
     
 transform :: Float -> Vec2 Int -> (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float)) -> (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
