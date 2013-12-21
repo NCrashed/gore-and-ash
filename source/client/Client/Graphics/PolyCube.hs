@@ -27,7 +27,7 @@ module Client.Graphics.PolyCube(
 import Graphics.GPipe
 import Data.Monoid
 
-import Client.Graphics.Common
+import Client.Graphics.Common 
 
 cube :: PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
 cube = mconcat [cubeSidePosX, cubeSideNegX, cubeSidePosY, cubeSideNegY, cubeSidePosZ, cubeSideNegZ]

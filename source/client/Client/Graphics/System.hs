@@ -34,7 +34,8 @@ import Graphics.UI.GLUT(
     , ($=))
 
 --import Client.Graphics.PolyCube
-import Client.Graphics.Boxed.Chunk
+--import Client.Graphics.Boxed.Chunk
+import Client.Graphics.Voxel.Chunk
 import Game.Boxed.Chunk
 
 initGraphicsSystem :: ProcessId -> Process ProcessId
@@ -50,7 +51,7 @@ renderFrame tex angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
     --return $ cubeFrameBuffer tex angle size
-    return $ chunkFrameBuffer tex chunk angle size
+    return $ chunkFrameBuffer chunk angle size
     where
         --Just chunk = chunkFromList 4 $ replicate 16 1 ++ replicate 16 0 ++ replicate 16 1 ++ replicate 16 1
         Just chunk = chunkFromList 4   [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0
