@@ -19,7 +19,7 @@ executable GoreAndAsh-Client
                    network-transport >=0.3.0 && <0.4,
                    network-transport-inmemory >=0.3.0 && <0.4,
                    GLUT >=2.5.0 && <2.6,
-                   GPipe >=1.4.1 && <1.5,
+                   GPipe >=1.4.2 && <1.5,
                    GPipe-TextureLoad >=1.0.4 && <1.1,
                    Vec >=1.0.1 && <1.1,
                    repa >=3.2.3 && <3.3

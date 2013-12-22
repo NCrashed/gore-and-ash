@@ -19,17 +19,41 @@ module Client.Graphics.Voxel.Chunk(
     ) where
     
 import Graphics.GPipe
-import Client.Graphics.Common
+import Data.Vec
+import Data.Maybe
+import Client.Graphics.Common 
+import Client.Graphics.Camera
 import Game.Boxed.Chunk
+
+import Debug.Trace
 
 chunkFrameBuffer :: BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer chunk angle size = paintSolid (rasterizedChunk chunk angle size) emptyFrameBuffer
 
 rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
-rasterizedChunk chunk angle size = fmap (testColor . const fragDepth) $ rasterizeFront $ transformedQuad
+rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv chunk size) $ rasterizeFront transformedQuad
+    where
+        projMatrix = perspective 1 100 (pi/3) (fromIntegral width / fromIntegral height)
+        viewMatrix = cameraMatrix $ newCamera (0:.0:.0:.()) (0:.0:.1:.()) (0:.1:.0:.())
+        projViewMatrix = projMatrix `multmm` viewMatrix
+        projViewInv = toGPU $ fromMaybe identity (invert projViewMatrix)
 
-testColor :: FragmentDepth -> (Color RGBFormat (Fragment Float), FragmentDepth)
-testColor depth = (RGB $ toGPU (0:.0.45:.1:.()), 0)
+rayCast :: Mat44 (Fragment Float) -> BoxedChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk vecStart direction
+    where
+        zero :: Fragment Float
+        zero = toGPU 0
+        one :: Fragment Float
+        one = toGPU 1
+        viewX = (2.0 * (fragX + 0.5)) / fromIntegral width - 1.0
+        viewY = (2.0 * (fragY + 0.5)) / fromIntegral height - 1.0
+        vecStart = wtrans $ projViewInv `multmv` (viewX:.viewY:.zero:.one:.()) 
+        vecEnd   = wtrans $ projViewInv `multmv` (viewX:.viewY:.one :.one:.()) 
+        wtrans (x:.y:.z:.w:.()) = let iw = one / w in (x*iw):.(y*iw):.(z*iw):.()
+        direction = normalize $ vecEnd - vecStart
+
+rayPixel :: BoxedChunk -> Vec3 (Fragment Float) -> Vec3 (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayPixel chunk origin direction = (RGB direction, 0)
 
 transformedQuad :: PrimitiveStream Triangle (Vec4 (Vertex Float), ())
 transformedQuad = fmap homonize screenQuad
