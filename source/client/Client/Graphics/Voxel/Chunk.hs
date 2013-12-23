@@ -23,9 +23,9 @@ import Data.Vec
 import Data.Maybe
 import Client.Graphics.Common 
 import Client.Graphics.Camera
+import Client.Graphics.Raycasting.Ray
 import Game.Boxed.Chunk
 
-import Debug.Trace
 
 chunkFrameBuffer :: BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer chunk angle size = paintSolid (rasterizedChunk chunk angle size) emptyFrameBuffer
@@ -39,12 +39,12 @@ rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv
         projViewInv = toGPU $ fromMaybe identity (invert projViewMatrix)
 
 rayCast :: Mat44 (Fragment Float) -> BoxedChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
-rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk vecStart direction
+rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk $ GPURay vecStart direction
     where
         zero :: Fragment Float
-        zero = toGPU 0
+        zero = 0
         one :: Fragment Float
-        one = toGPU 1
+        one = 1
         viewX = (2.0 * (fragX + 0.5)) / fromIntegral width - 1.0
         viewY = (2.0 * (fragY + 0.5)) / fromIntegral height - 1.0
         vecStart = wtrans $ projViewInv `multmv` (viewX:.viewY:.zero:.one:.()) 
@@ -52,15 +52,15 @@ rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk vecStart direct
         wtrans (x:.y:.z:.w:.()) = let iw = one / w in (x*iw):.(y*iw):.(z*iw):.()
         direction = normalize $ vecEnd - vecStart
 
-rayPixel :: BoxedChunk -> Vec3 (Fragment Float) -> Vec3 (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
-rayPixel chunk origin direction = (RGB direction, 0)
+rayPixel :: BoxedChunk -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayPixel chunk (GPURay origin direction) = (RGB direction, 0)
 
 transformedQuad :: PrimitiveStream Triangle (Vec4 (Vertex Float), ())
 transformedQuad = fmap homonize screenQuad
     where 
         homonize :: Vec3 (Vertex Float) -> (Vec4 (Vertex Float), ())
-        homonize vec = (homPoint vec :: Vec4 (Vertex Float), ())  
+        homonize v = (homPoint v :: Vec4 (Vertex Float), ())  
 
 screenQuad :: PrimitiveStream Triangle (Vec3 (Vertex Float))
-screenQuad = toGPUStream TriangleList $  [(-1):.(-1):.0:.(), 1:.1:.0:.(),     (-1):.1:.0:.(), 
-                                          (-1):.(-1):.0:.(), 1:.(-1):.0:.(),  1:.1:.0:.()]
+screenQuad = toGPUStream TriangleList [(-1):.(-1):.0:.(), 1:.1:.0:.(),     (-1):.1:.0:.(), 
+                                       (-1):.(-1):.0:.(), 1:.(-1):.0:.(),  1:.1:.0:.()]
