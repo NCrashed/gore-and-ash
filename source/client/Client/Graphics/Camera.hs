@@ -23,11 +23,11 @@ import Data.Vec
 
 data Camera = Camera
   -- | Camera Eye position
-  (Vec3 Float)
+  !(Vec3 Float)
   -- | Camera Forward direction
-  (Vec3 Float)
+  !(Vec3 Float)
   -- | Camera Up direction
-  (Vec3 Float)
+  !(Vec3 Float)
 
 
 newCamera :: Vec3 Float -> Vec3 Float -> Vec3 Float -> Camera
