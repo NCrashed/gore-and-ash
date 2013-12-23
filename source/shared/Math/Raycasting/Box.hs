@@ -47,7 +47,7 @@ boxMax (Box _ v) = v
 -- | returns a pair of ray parameters for in and out point of ray way through the box.
 intersectBoxAndRay :: Box -> Ray -> Maybe (Float, Float) 
 intersectBoxAndRay (Box (minBoxX:.minBoxY:.minBoxZ:.()) (maxBoxX:.maxBoxY:.maxBoxZ:.())) (Ray (originX:.originY:.originZ:.()) (dirX:.dirY:.dirZ:.())) 
-  | (tminX > tmaxY || tminY > tmaxY) || (tminXY > tmaxZ || tminZ > tmaxXY) = Nothing
+  | (tminX > tmaxY || tminY > tmaxX) || (tminXY > tmaxZ || tminZ > tmaxXY) = Nothing
   | otherwise = Just (tminXYZ, tmaxXYZ)
   where
     divX = 1 / dirX
@@ -57,8 +57,8 @@ intersectBoxAndRay (Box (minBoxX:.minBoxY:.minBoxZ:.()) (maxBoxX:.maxBoxY:.maxBo
     tminY = if divY >= 0 then (minBoxY - originY) * divY else (maxBoxY - originY) * divY
     tmaxY = if divY  < 0 then (maxBoxY - originY) * divY else (minBoxY - originY) * divY
     divZ = 1 / dirZ
-    tminZ = if divZ >= 0 then (minBoxZ - originZ) * divX else (maxBoxZ - originZ) * divZ
-    tmaxZ = if divZ  < 0 then (maxBoxZ - originZ) * divX else (minBoxZ - originZ) * divZ
+    tminZ = if divZ >= 0 then (minBoxZ - originZ) * divZ else (maxBoxZ - originZ) * divZ
+    tmaxZ = if divZ  < 0 then (maxBoxZ - originZ) * divZ else (minBoxZ - originZ) * divZ
     
     tminXY = if tminY > tminX then tminY else tminX
     tmaxXY = if tmaxY < tmaxX then tmaxY else tmaxX  

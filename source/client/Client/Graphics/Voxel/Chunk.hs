@@ -19,11 +19,12 @@ module Client.Graphics.Voxel.Chunk(
     ) where
     
 import Graphics.GPipe
-import Data.Vec
+import Data.Vec as Vec
 import Data.Maybe
 import Client.Graphics.Common 
 import Client.Graphics.Camera
 import Client.Graphics.Raycasting.Ray
+import Client.Graphics.Raycasting.Box
 import Game.Boxed.Chunk
 
 
@@ -34,27 +35,29 @@ rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBF
 rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv chunk size) $ rasterizeFront transformedQuad
     where
         projMatrix = perspective 1 100 (pi/3) (fromIntegral width / fromIntegral height)
-        viewMatrix = cameraMatrix $ newCamera (0:.0:.0:.()) (0:.0:.1:.()) (0:.1:.0:.())
+        viewMatrix = cameraMatrix $ newCamera rotatedVec (-rotatedVec) (0:.1:.0:.())
         projViewMatrix = projMatrix `multmm` viewMatrix
         projViewInv = toGPU $ fromMaybe identity (invert projViewMatrix)
-
+        rotatedVec = wtrans $ rotationVec (normalize (0:.1:.0:.())) angle `multmv` (0:.0:.(-5):.1:.())
+        wtrans (x:.y:.z:.w:.()) = let iw = 1 / w in (x*iw):.(y*iw):.(z*iw):.()
+        
 rayCast :: Mat44 (Fragment Float) -> BoxedChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
-rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk $ GPURay vecStart direction
+rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk testBox $ GPURay vecStart direction
     where
-        zero :: Fragment Float
-        zero = 0
-        one :: Fragment Float
-        one = 1
         viewX = (2.0 * (fragX + 0.5)) / fromIntegral width - 1.0
         viewY = (2.0 * (fragY + 0.5)) / fromIntegral height - 1.0
-        vecStart = wtrans $ projViewInv `multmv` (viewX:.viewY:.zero:.one:.()) 
-        vecEnd   = wtrans $ projViewInv `multmv` (viewX:.viewY:.one :.one:.()) 
-        wtrans (x:.y:.z:.w:.()) = let iw = one / w in (x*iw):.(y*iw):.(z*iw):.()
+        vecStart = wtrans $ projViewInv `multmv` (viewX:.viewY:.0:.1:.()) 
+        vecEnd   = wtrans $ projViewInv `multmv` (viewX:.viewY:.1:.1:.()) 
+        wtrans (x:.y:.z:.w:.()) = let iw = 1 / w in (x*iw):.(y*iw):.(z*iw):.()
         direction = normalize $ vecEnd - vecStart
-
-rayPixel :: BoxedChunk -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
-rayPixel chunk (GPURay origin direction) = (RGB direction, 0)
-
+        testBox = toGPU $ GPUBox ((-1):.(-1):.(-1):.()) (1:. 1:. 1:. ()) 
+        
+rayPixel :: BoxedChunk -> GPUBox (Fragment Float) -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayPixel chunk box ray = (RGB color, 0)
+    where
+      (res, tmin, tmax) = intersectBoxAndRay box ray
+      color = ifB res (0 :. 0.45 :. 1 :. ()) (0 :. 0 :. 0 :. ())
+      
 transformedQuad :: PrimitiveStream Triangle (Vec4 (Vertex Float), ())
 transformedQuad = fmap homonize screenQuad
     where 
