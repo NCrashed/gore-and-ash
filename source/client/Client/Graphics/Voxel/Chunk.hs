@@ -32,14 +32,21 @@ import Foreign.ForeignPtr.Safe (withForeignPtr)
 
 newtype GPUChunk = GPUChunk (Texture3D RGBAFormat)
 
+-- | Converts CPU chunk into GPU chunk to use in fragment shader. Performs unsafe IO due
+-- | GPipe perfect decision to operate with foreign pointers when loading from memory.
 convertChunk :: BoxedChunk -> GPUChunk
 convertChunk chunk = GPUChunk $ unsafePerformIO $ do
     ptr <- getRawData chunk 
     withForeignPtr ptr $ \rawPtr -> newTexture UnsignedInt8_8_8_8 RGBA8 (chunkSizeVec chunk) [rawPtr]
 
+
+-- | Draws boxed chunk into frame buffer to display. The last step of graphic pipe that
+-- | paints resulted fragments into framebuffer.
 chunkFrameBuffer :: BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer chunk angle size = paintSolid (rasterizedChunk chunk angle size) emptyFrameBuffer
 
+-- | Rasterizes transformed screen quad and ray-casts chunk from each fragment. The main purpose to
+-- | extract view-projection matrix and it inverse form to pass into raycasing function.
 rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
 rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv (convertChunk chunk) size) $ rasterizeFront transformedQuad
     where
@@ -49,7 +56,9 @@ rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv
         projViewInv = toGPU $ fromMaybe identity (invert projViewMatrix)
         rotatedVec = wtrans $ rotationVec (normalize (0:.1:.0:.())) angle `multmv` (0:.0:.(-5):.1:.())
         wtrans (x:.y:.z:.w:.()) = let iw = 1 / w in (x*iw):.(y*iw):.(z*iw):.()
-        
+
+-- | Calculates color for a ray that started from screen pixel. The main purpose is to
+-- | define world-space ray origins and directions.       
 rayCast :: Mat44 (Fragment Float) -> GPUChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
 rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk testBox $ GPURay vecStart direction
     where
@@ -61,18 +70,22 @@ rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk testBox $ GPURa
         direction = normalize $ vecEnd - vecStart
         testBox = toGPU $ GPUBox ((-1):.(-1):.(-1):.()) (1:. 1:. 1:. ()) 
         
+-- | Calculates color for a ray with known world-space origin and direction.        
 rayPixel :: GPUChunk -> GPUBox (Fragment Float) -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
 rayPixel chunk box ray = (RGB color, 0)
     where
       (res, tmin, tmax) = intersectBoxAndRay box ray
       color = ifB res (0 :. 0.45 :. 1 :. ()) (0 :. 0 :. 0 :. ())
-      
+
+-- | Some trivial transformations for viewport quad.      
 transformedQuad :: PrimitiveStream Triangle (Vec4 (Vertex Float), ())
 transformedQuad = fmap homonize screenQuad
     where 
         homonize :: Vec3 (Vertex Float) -> (Vec4 (Vertex Float), ())
         homonize v = (homPoint v :: Vec4 (Vertex Float), ())  
 
+-- | To start raycasting we need a fragment for each viewport pixel and to
+-- | achive this a huge quad that covering all viewport is produced.
 screenQuad :: PrimitiveStream Triangle (Vec3 (Vertex Float))
 screenQuad = toGPUStream TriangleList [(-1):.(-1):.0:.(), 1:.1:.0:.(),     (-1):.1:.0:.(), 
                                        (-1):.(-1):.0:.(), 1:.(-1):.0:.(),  1:.1:.0:.()]
