@@ -16,7 +16,11 @@
 module Game.Boxed.Chunk(
       BoxedChunk()
     , chunkSize
+    , chunkSizeVec
     , chunkFromList
+    
+    , getRawData
+    
     , Neighbours()
     , upNeighbour
     , downNeighbour
@@ -28,8 +32,10 @@ module Game.Boxed.Chunk(
     ) where
     
 import qualified Data.Array.Repa as Repa
-import Data.Vec (Vec3, Vec6, fromList, get, n0, n1, n2, n3, n4, n5)
+import Data.Vec hiding (head, foldl, length)
 import Data.Word
+import Foreign (ForeignPtr, mallocForeignPtr)
+import Data.Array.Repa.Repr.ForeignPtr (computeIntoP)
 
 data BoxedChunk = BoxedChunk (Repa.Array Repa.U Repa.DIM3 Word32)
 
@@ -44,6 +50,17 @@ chunkFromList size list = if size*size*size == length list then Just $ chunk lis
     where 
         chunk = BoxedChunk . Repa.fromListUnboxed (Repa.Z Repa.:. (size :: Int) Repa.:. (size :: Int) Repa.:. (size :: Int))
         
+chunkSizeVec :: BoxedChunk -> Vec3 Int
+chunkSizeVec (BoxedChunk array) = dimX :. dimY :. dimZ :. () 
+  where
+    (Repa.Z Repa.:. dimX Repa.:. dimY Repa.:. dimZ) = Repa.extent array
+   
+getRawData :: BoxedChunk -> IO (ForeignPtr Word32)
+getRawData (BoxedChunk array) = do
+  ptr <- mallocForeignPtr :: IO (ForeignPtr Word32)
+  computeIntoP ptr $ Repa.delay array 
+  return ptr
+
 type Neighbours = Vec6 Word32
 
 upNeighbour :: Neighbours -> Word32

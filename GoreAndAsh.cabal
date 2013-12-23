@@ -7,7 +7,6 @@ license:        GPL-3
 copyright:      2013 Anton Gushcha
 license-file:   ./LICENSE
 maintainer:     ncrashed@gmail.com
-data-files:     assets/textures/planks.jpg
 
 executable GoreAndAsh-Client
   build-depends:   

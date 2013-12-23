@@ -27,12 +27,21 @@ import Client.Graphics.Raycasting.Ray
 import Client.Graphics.Raycasting.Box
 import Game.Boxed.Chunk
 
+import System.IO.Unsafe (unsafePerformIO)
+import Foreign.ForeignPtr.Safe (withForeignPtr)
+
+newtype GPUChunk = GPUChunk (Texture3D RGBAFormat)
+
+convertChunk :: BoxedChunk -> GPUChunk
+convertChunk chunk = GPUChunk $ unsafePerformIO $ do
+    ptr <- getRawData chunk 
+    withForeignPtr ptr $ \rawPtr -> newTexture UnsignedInt8_8_8_8 RGBA8 (chunkSizeVec chunk) [rawPtr]
 
 chunkFrameBuffer :: BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer chunk angle size = paintSolid (rasterizedChunk chunk angle size) emptyFrameBuffer
 
 rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
-rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv chunk size) $ rasterizeFront transformedQuad
+rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv (convertChunk chunk) size) $ rasterizeFront transformedQuad
     where
         projMatrix = perspective 1 100 (pi/3) (fromIntegral width / fromIntegral height)
         viewMatrix = cameraMatrix $ newCamera rotatedVec (-rotatedVec) (0:.1:.0:.())
@@ -41,7 +50,7 @@ rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv
         rotatedVec = wtrans $ rotationVec (normalize (0:.1:.0:.())) angle `multmv` (0:.0:.(-5):.1:.())
         wtrans (x:.y:.z:.w:.()) = let iw = 1 / w in (x*iw):.(y*iw):.(z*iw):.()
         
-rayCast :: Mat44 (Fragment Float) -> BoxedChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayCast :: Mat44 (Fragment Float) -> GPUChunk -> Vec2 Int -> () -> (Color RGBFormat (Fragment Float), FragmentDepth)
 rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk testBox $ GPURay vecStart direction
     where
         viewX = (2.0 * (fragX + 0.5)) / fromIntegral width - 1.0
@@ -52,7 +61,7 @@ rayCast projViewInv chunk (width:.height:.()) _ = rayPixel chunk testBox $ GPURa
         direction = normalize $ vecEnd - vecStart
         testBox = toGPU $ GPUBox ((-1):.(-1):.(-1):.()) (1:. 1:. 1:. ()) 
         
-rayPixel :: BoxedChunk -> GPUBox (Fragment Float) -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
+rayPixel :: GPUChunk -> GPUBox (Fragment Float) -> GPURay (Fragment Float) -> (Color RGBFormat (Fragment Float), FragmentDepth)
 rayPixel chunk box ray = (RGB color, 0)
     where
       (res, tmin, tmax) = intersectBoxAndRay box ray
