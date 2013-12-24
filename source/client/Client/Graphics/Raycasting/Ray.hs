@@ -16,12 +16,17 @@
 {-# LANGUAGE FlexibleInstances, TypeFamilies #-}
 module Client.Graphics.Raycasting.Ray(
     GPURay(..)
+  , rayPoint
   ) where
   
-import Graphics.GPipe
+import Client.Graphics.GPipe
+import Data.Vec as Vec
 
 data GPURay a = GPURay !(Vec3 a) !(Vec3 a)
  
 instance GPU a => GPU (GPURay a) where 
   type CPU (GPURay a) = GPURay (CPU a)
   toGPU (GPURay a b)= GPURay (toGPU a) (toGPU b)
+
+rayPoint :: GPURay (Fragment Float) -> Fragment Float -> Vec3 (Fragment Float)
+rayPoint (GPURay origin direction) t = origin + (Vec.map (*t) direction)

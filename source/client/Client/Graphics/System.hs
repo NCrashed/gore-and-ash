@@ -20,7 +20,7 @@ module Client.Graphics.System(
 import Control.Distributed.Process
 import Control.Concurrent (yield)
 
-import Graphics.GPipe
+import Client.Graphics.GPipe
 import Data.IORef
 import Data.Word
 import Data.Bits
@@ -46,7 +46,8 @@ renderFrame :: IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat 
 renderFrame angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
-    return $ chunkFrameBuffer chunk angle size
+    gpuChunk <- convertChunk chunk
+    return $ chunkFrameBuffer gpuChunk angle size
     where
         Just chunk = chunkFromList 4   [z, c, z, c, z, c, z, c, z, c, z, c, c, z, c, z
                                        ,c, c, c, z, z, z, c, c, c, c, z, z, z, c, z, c

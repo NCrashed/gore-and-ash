@@ -20,7 +20,7 @@ module Client.Graphics.Common(
     , transform
     ) where
     
-import Graphics.GPipe
+import Client.Graphics.GPipe
 import Data.Vec as Vec
     
 paintSolid :: FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth) -> FrameBuffer RGBFormat DepthFormat () -> FrameBuffer RGBFormat DepthFormat ()

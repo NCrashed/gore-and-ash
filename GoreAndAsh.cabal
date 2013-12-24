@@ -18,10 +18,16 @@ executable GoreAndAsh-Client
                    network-transport >=0.3.0 && <0.4,
                    network-transport-inmemory >=0.3.0 && <0.4,
                    GLUT >=2.5.0 && <2.6,
-                   GPipe >=1.4.2 && <1.5,
                    GPipe-TextureLoad >=1.0.4 && <1.1,
                    Vec >=1.0.1 && <1.1,
-                   repa >=3.2.3 && <3.3
+                   repa >=3.2.3 && <3.3,
+                   containers >=0.5.0 && <0.6,
+                   list-tries >=0.4.1 && <0.5,
+                   OpenGL >=2.8.0 && <2.9,
+                   Boolean >=0.0.1 && <0.1,
+                   Vec-Boolean >=1.0.6 && <1.1,
+                   Vec == 1.0.1,
+                   transformers >=0.3.0 && <0.4
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  

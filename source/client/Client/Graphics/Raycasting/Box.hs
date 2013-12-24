@@ -17,9 +17,10 @@
 module Client.Graphics.Raycasting.Box(
     GPUBox(..)
   , intersectBoxAndRay
+  , toLocalBoxPos
   ) where
   
-import Graphics.GPipe
+import Client.Graphics.GPipe
 import Client.Graphics.Raycasting.Ray
 
 -- | Axis aligned box
@@ -56,3 +57,13 @@ intersectBoxAndRay (GPUBox (minBoxX:.minBoxY:.minBoxZ:.()) (maxBoxX:.maxBoxY:.ma
     tminXYZ = ifB (tminZ >* tminXY) tminZ tminXY
     tmaxXYZ = ifB (tmaxZ <* tmaxXY) tmaxZ tmaxXY
      
+-- | Transforms vector position from world space to local box space where min box corner is origin.     
+toLocalBoxPos :: GPUBox (Fragment Float) -> Vec3 (Fragment Float) -> Vec3 (Fragment Float)
+toLocalBoxPos (GPUBox (minBoxX:.minBoxY:.minBoxZ:.()) (maxBoxX:.maxBoxY:.maxBoxZ:.())) (x:.y:.z:.()) = x':.y':.z':.()
+  where
+    xwidth = maxBoxX - minBoxX
+    ywidth = maxBoxY - minBoxY
+    zwidth = maxBoxZ - minBoxZ
+    x' = (x - minBoxX) / xwidth
+    y' = (y - minBoxY) / ywidth
+    z' = (z - minBoxZ) / zwidth

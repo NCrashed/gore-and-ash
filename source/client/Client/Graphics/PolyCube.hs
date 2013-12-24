@@ -24,7 +24,7 @@ module Client.Graphics.PolyCube(
     , cubeSideNegZ
     ) where
     
-import Graphics.GPipe
+import Client.Graphics.GPipe
 import Data.Monoid
 
 import Client.Graphics.Common 
