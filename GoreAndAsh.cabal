@@ -11,42 +11,49 @@ maintainer:     ncrashed@gmail.com
 executable GoreAndAsh-Client
   build-depends:   
                    base >= 4,
-                   distributed-process >=0.4.2 && <0.5,
-                   network-transport-tcp >=0.3.1 && <0.4,
-                   network >=2.4.1 && <2.5,
-                   bytestring >=0.10.0 && <0.11,
-                   network-transport >=0.3.0 && <0.4,
-                   GLUT >=2.5.0 && <2.6,
-                   Vec >=1.0.1 && <1.1,
-                   repa >=3.2.3 && <3.3,
                    containers >=0.5.0 && <0.6,
-                   list-tries >=0.4.1 && <0.5,
-                   OpenGL >=2.8.0 && <2.9,
-                   Boolean >=0.0.1 && <0.1,
-                   Vec-Boolean >=1.0.6 && <1.1,
-                   Vec == 1.0.1,
                    transformers >=0.3.0 && <0.4,
                    data-accessor >=0.2.2 && <0.3,
+                   bytestring >=0.10.0 && <0.11,
+                   list-tries >=0.4.1 && <0.5,
+                   repa >=3.2.3 && <3.3,
+                   Boolean >=0.0.1 && <0.1,
+                   Vec >=1.0.1 && <1.1,
+                   Vec-Boolean >=1.0.6 && <1.1,
+                   OpenGL >=2.8.0 && <2.9,
+                   GLUT >=2.5.0 && <2.6,
+                   bitmap >=0.0.2 && <0.1,
                    stb-image >=0.2.1 && <0.3,
-                   bitmap >=0.0.2 && <0.1
+                   network >=2.4.1 && <2.5,
+                   network-transport >=0.3.0 && <0.4,
+                   distributed-process >=0.4.2 && <0.5
+                   
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
                    source/client, 
                    source/shared
-
+  Extensions:      CPP				   
+  if os(windows)
+    ld-options: --enable-stdcall-fixup
+    C-sources: ./source/shared/Network/Transport/ntohl.c    
+    
 executable GoreAndAsh-Server
   build-depends:   
                    base >= 4,
-                   distributed-process >=0.4.2 && <0.5,
-                   network-transport-tcp >=0.3.1 && <0.4,
-                   network >=2.4.1 && <2.5,
                    containers >=0.5.0 && <0.6,
+                   data-accessor >=0.2.2 && <0.3,
                    repa >=3.2.3 && <3.3,
-                   data-accessor >=0.2.2 && <0.3
+                   network >=2.4.1 && <2.5,
+                   distributed-process >=0.4.2 && <0.5
+             
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
                    source/server, 
                    source/shared
+  Extensions:      CPP				   
+  if os(windows)
+    ld-options: --enable-stdcall-fixup
+    C-sources: ./source/shared/Network/Transport/ntohl.c               
 
