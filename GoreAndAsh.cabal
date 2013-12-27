@@ -17,7 +17,6 @@ executable GoreAndAsh-Client
                    bytestring >=0.10.0 && <0.11,
                    network-transport >=0.3.0 && <0.4,
                    GLUT >=2.5.0 && <2.6,
-                   GPipe-TextureLoad >=1.0.4 && <1.1,
                    Vec >=1.0.1 && <1.1,
                    repa >=3.2.3 && <3.3,
                    containers >=0.5.0 && <0.6,
@@ -27,7 +26,9 @@ executable GoreAndAsh-Client
                    Vec-Boolean >=1.0.6 && <1.1,
                    Vec == 1.0.1,
                    transformers >=0.3.0 && <0.4,
-                   data-accessor >=0.2.2 && <0.3
+                   data-accessor >=0.2.2 && <0.3,
+                   stb-image >=0.2.1 && <0.3,
+                   bitmap >=0.0.2 && <0.1
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
@@ -41,8 +42,8 @@ executable GoreAndAsh-Server
                    network-transport-tcp >=0.3.1 && <0.4,
                    network >=2.4.1 && <2.5,
                    containers >=0.5.0 && <0.6,
-                   network-transport-inmemory >=0.3.0 && <0.4,
-                   repa >=3.2.3 && <3.3
+                   repa >=3.2.3 && <3.3,
+                   data-accessor >=0.2.2 && <0.3
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
