@@ -16,7 +16,6 @@ executable GoreAndAsh-Client
                    network >=2.4.1 && <2.5,
                    bytestring >=0.10.0 && <0.11,
                    network-transport >=0.3.0 && <0.4,
-                   network-transport-inmemory >=0.3.0 && <0.4,
                    GLUT >=2.5.0 && <2.6,
                    GPipe-TextureLoad >=1.0.4 && <1.1,
                    Vec >=1.0.1 && <1.1,
@@ -27,7 +26,8 @@ executable GoreAndAsh-Client
                    Boolean >=0.0.1 && <0.1,
                    Vec-Boolean >=1.0.6 && <1.1,
                    Vec == 1.0.1,
-                   transformers >=0.3.0 && <0.4
+                   transformers >=0.3.0 && <0.4,
+                   data-accessor >=0.2.2 && <0.3
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
