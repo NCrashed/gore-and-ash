@@ -41,7 +41,7 @@ convertChunk chunk = do
 
 -- | Gets color from gpu chunk. Position coordinates should be between 0 and 1.
 extractColor :: GPUChunk -> Vec3 (Fragment Float) -> Color RGBAFormat (Fragment Float)
-extractColor (GPUChunk texture) pos = sample (Sampler Point Clamp) texture pos -- RGBA (0:.0.45:.1.0:.()) 0
+extractColor (GPUChunk texture) = sample (Sampler Point Clamp) texture
 
 -- | Draws boxed chunk into frame buffer to display. The last step of graphic pipe that
 -- | paints resulted fragments into framebuffer.
@@ -54,7 +54,7 @@ rasterizedChunk :: GPUChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFor
 rasterizedChunk chunk angle size@(width:.height:.()) = fmap (rayCast projViewInv chunk size) $ rasterizeFront transformedQuad
     where
         projMatrix = perspective 1 100 (pi/3) (fromIntegral width / fromIntegral height)
-        viewMatrix = cameraMatrix $ newCamera rotatedVec (rotatedVec) (0:.1:.0:.())
+        viewMatrix = cameraMatrix $ newCamera rotatedVec rotatedVec (0:.1:.0:.())
         projViewMatrix = projMatrix `multmm` viewMatrix
         projViewInv = toGPU $ fromMaybe identity (invert projViewMatrix)
         rotatedVec = wtrans $ rotationVec (normalize (0:.1:.0:.())) angle `multmv` (0:.0:.(-5):.1:.())

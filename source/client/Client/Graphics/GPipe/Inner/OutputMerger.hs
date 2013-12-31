@@ -51,7 +51,7 @@ import Client.Graphics.GPipe.Inner.GPUStream
 import Client.Graphics.GPipe.Inner.Resources
 import Graphics.Rendering.OpenGL hiding (RGBA, Blend, stencilMask, Color, ColorBuffer, DepthBuffer, StencilBuffer, Vertex)
 import qualified Graphics.Rendering.OpenGL as GL
-import Data.Vec (vec, (:.)(..), Vec2)
+import Data.Vec (vec, (:.)(..), Vec2, Vec4)
 import qualified Graphics.UI.GLUT as GLUT
 import Data.Int (Int32)
 import Data.Word (Word32)
@@ -61,7 +61,7 @@ import Graphics.UI.GLUT
 import Control.Monad (liftM)
 import Data.Maybe (fromJust)
 import Control.Exception (evaluate)
-import Control.Monad.Trans.Reader (runReaderT)
+import Control.Monad.Trans.Reader (runReaderT, ReaderT)
 
 type FragmentDepth = Fragment Float
 -- | 'True' for each color component that should be written to the 'FrameBuffer'.
@@ -112,6 +112,7 @@ newFrameBufferDepth :: Depth -> FrameBuffer () DepthFormat ()
 newFrameBufferDepthStencil :: Depth -> Stencil -> FrameBuffer () DepthFormat StencilFormat
 newFrameBufferStencil :: Stencil -> FrameBuffer () () StencilFormat
 
+ioEvaluateColor :: (Eq a, ColorFormat f) => a -> a -> Color f a -> ReaderT ContextCache IO (Vec4 a)
 ioEvaluateColor z e x = let (a:.b:.c:.d:.()) = fromColor z e x
                         in do a' <- ioEvaluate a
                               b' <- ioEvaluate b
@@ -130,22 +131,26 @@ newFrameBufferColor c = FrameBuffer $ do
     liftIO $ do setDefaultStates
                 setNewColor c'
                 clear [GL.ColorBuffer]
+
+setBufferDefProps :: (Real a) => Vec4 a -> a -> IO ()
+setBufferDefProps a b = do
+  setDefaultStates
+  setNewColor a
+  setNewDepth b
+                
 newFrameBufferColorDepth c d = FrameBuffer $ do
     c' <- ioEvaluateColor 0 1 c
     d' <- ioEvaluate d
     setContextWindow
-    liftIO $ do setDefaultStates
-                setNewColor c'
-                setNewDepth d'
+    liftIO $ do setBufferDefProps c' d'
                 clear [GL.ColorBuffer, GL.DepthBuffer]
+                    
 newFrameBufferColorDepthStencil c d s = FrameBuffer $ do
     c' <- ioEvaluateColor 0 1 c
     d' <- ioEvaluate d
     s' <- ioEvaluate s
     setContextWindow
-    liftIO $ do setDefaultStates
-                setNewColor c'
-                setNewDepth d'
+    liftIO $ do setBufferDefProps c' d'
                 setNewStencil s'
                 clear [GL.ColorBuffer, GL.DepthBuffer, GL.StencilBuffer]
 
@@ -157,6 +162,7 @@ newFrameBufferColorStencil c s = FrameBuffer $ do
                 setNewColor c'
                 setNewStencil s'
                 clear [GL.ColorBuffer, GL.StencilBuffer]
+                
 newFrameBufferDepth d = FrameBuffer $ do
     d' <- ioEvaluate d
     setContextWindow
@@ -179,9 +185,11 @@ newFrameBufferStencil s = FrameBuffer $ do
                 setNewStencil s'
                 clear [GL.StencilBuffer]
 
-
+setNewColor :: Real a => Vec4 a -> IO ()
 setNewColor (x:.y:.z:.w:.()) = clearColor $= Color4 (realToFrac x) (realToFrac y) (realToFrac z) (realToFrac w)
+setNewDepth :: Real a => a -> IO ()
 setNewDepth d = clearDepth $= realToFrac d
+setNewStencil :: Integral a => a -> IO ()
 setNewStencil s = clearStencil $= fromIntegral s
 
 ------------------------------------------------------------------
@@ -200,15 +208,14 @@ paintRastDepthStencil :: StencilTests -> StencilOps -> DepthFunction -> DepthMas
 paintColorRastDepthStencil :: ColorFormat c => StencilTests -> StencilOps -> DepthFunction -> DepthMask -> StencilOps -> StencilOps -> Blending -> ColorMask c -> FragmentStream (Color c (Fragment Float)) -> FrameBuffer c DepthFormat StencilFormat -> FrameBuffer c DepthFormat StencilFormat
 
 ------------------------------------------------------------------
-
 paintColor _ _ (FragmentStream []) fb = fb
 paintColor b c s (FrameBuffer io) = FrameBuffer $ loadFragmentColorStream s $ do
-                                                     b'<-ioEvaluate b
+                                                     b'<-ioEvaluate b 
                                                      c'<-ioEvaluateColor False False c
                                                      io
                                                      liftIO $ do
                                                          loadBlending b'
-                                                         loadColorMask c'
+                                                         loadColorMask c' 
                                                          depthFunc $= Nothing
                                                          stencilTest $= Disabled
 
@@ -217,7 +224,7 @@ paintDepth f d s (FrameBuffer io) = FrameBuffer $ loadFragmentDepthStream s $ do
                                                       f'<-ioEvaluate f
                                                       d'<-ioEvaluate d
                                                       io
-                                                      liftIO $ do
+                                                      liftIO $ do 
                                                           depthFunc $= Just f'
                                                           depthMask $= toCapability d'
                                                           loadColorMask (vec False)
@@ -236,7 +243,7 @@ paintColorDepth f d b c s (FrameBuffer io) = FrameBuffer $ loadFragmentColorDept
                                                                   depthFunc $= Just f'
                                                                   depthMask $= toCapability d'
                                                                   stencilTest $= Disabled
-
+                                                                  
 paintStencil _ _ _ (FragmentStream []) fb = fb
 paintStencil t sf p s (FrameBuffer io) = FrameBuffer $ loadFragmentAnyStream s $ do
                                                           t'<-ioEvaluate t
@@ -413,15 +420,15 @@ newWindow name (x:.y:.()) (w:.h:.()) f xio =
     do GLUT.initialWindowPosition $= Position (fromIntegral x) (fromIntegral y)
        GLUT.initialWindowSize $= Size (fromIntegral w) (fromIntegral h)
        GLUT.initialDisplayMode $= [ GLUT.DoubleBuffered, GLUT.RGBMode, GLUT.WithAlphaComponent, GLUT.WithDepthBuffer, GLUT.WithStencilBuffer] --Enable everything, it might be needed for textures 
-       w <- GLUT.createWindow name
-       xio w
-       newContextCache w
-       displayCallback $= do cache <- liftM fromJust $ getContextCache w --We need to do this to get the correct size
-                             let Size x y = contextViewPort cache
-                             FrameBuffer io <- f (fromIntegral x :. fromIntegral y :. ())
+       nw <- GLUT.createWindow name
+       xio nw
+       _ <- newContextCache nw
+       displayCallback $= do cache <- liftM fromJust $ getContextCache nw --We need to do this to get the correct size
+                             let Size nx ny = contextViewPort cache
+                             FrameBuffer io <- f (fromIntegral nx :. fromIntegral ny :. ())
                              runReaderT io cache
                              GLUT.swapBuffers
-       reshapeCallback $= Just (changeContextSize w)
+       reshapeCallback $= Just (changeContextSize nw)
 
 
 runFrameBufferInContext :: ContextCache -> Vec2 Int -> FrameBuffer c d s -> IO ()
@@ -433,11 +440,14 @@ runFrameBufferInContext c (a:.b:.()) (FrameBuffer io) = do
 --------------------------------------
 -- Private
 --
+toCapability :: Bool -> Capability
 toCapability True = Enabled
 toCapability False = Disabled
 
+loadColorMask :: Vec4 Bool -> IO ()
 loadColorMask (r:.g:.b:.a:.()) = colorMask $= Color4 (toCapability r) (toCapability g) (toCapability b) (toCapability a)
 
+loadBlending :: Blending -> IO ()
 loadBlending NoBlending            = do blend $= Disabled
                                         logicOp $= Nothing
 loadBlending (Blend e f (RGBA (r:.g:.b:.()) a)) = do
@@ -448,10 +458,11 @@ loadBlending (Blend e f (RGBA (r:.g:.b:.()) a)) = do
                                            blendFuncSeparate $= f
 loadBlending (BlendLogicOp op)     =    logicOp $= Just op
 
+loadStencilTests :: StencilTests -> IO ()
 loadStencilTests (StencilTests f b) = do stencilTest $= Enabled
                                          stencilFuncSeparate Front $= (stencilComparision f, fromIntegral $ stencilReference f, fromIntegral $ stencilMask f)
                                          stencilFuncSeparate Back $= (stencilComparision b, fromIntegral $ stencilReference b, fromIntegral $ stencilMask b)
-
+loadStencilOps :: StencilOps -> StencilOps -> StencilOps -> IO ()
 loadStencilOps sf df p = do stencilOpSeparate Front $= (frontStencilOp sf, frontStencilOp df, frontStencilOp p)
                             stencilOpSeparate Back $= (backStencilOp sf, backStencilOp df, backStencilOp p)
 
