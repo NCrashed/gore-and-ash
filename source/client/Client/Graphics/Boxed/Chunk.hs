@@ -17,7 +17,7 @@ module Client.Graphics.Boxed.Chunk(
       chunkFrameBuffer
     ) where
     
-import Graphics.GPipe
+import Client.Graphics.GPipe
 import Control.Applicative
 import Data.Vec as Vec
 import Data.Monoid

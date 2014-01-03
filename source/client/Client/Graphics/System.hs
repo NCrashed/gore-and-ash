@@ -22,8 +22,6 @@ import Control.Concurrent (yield)
 
 import Client.Graphics.GPipe
 import Data.IORef
-import Data.Word
-import Data.Bits
 import Graphics.UI.GLUT(
       Window
     , mainLoop
@@ -32,8 +30,9 @@ import Graphics.UI.GLUT(
     , getArgsAndInitialize
     , ($=))
 
-import Client.Graphics.Voxel.Chunk
+import Client.Graphics.Boxed.Chunk
 import Game.Boxed.Chunk
+import Data.Maybe (fromJust)
 
 initGraphicsSystem :: ProcessId -> Process ProcessId
 initGraphicsSystem _ = spawnLocal $ liftIO $ do
@@ -46,23 +45,15 @@ renderFrame :: IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat 
 renderFrame angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
-    gpuChunk <- convertChunk chunk
-    return $ chunkFrameBuffer gpuChunk angle size
+    return $ chunkFrameBuffer undefined (fromJust $ calcChunk (angle > pi)) angle size
     where
-        Just chunk = chunkFromList 4   [z, c, z, c, z, c, z, c, z, c, z, c, c, z, c, z
-                                       ,c, c, c, z, z, z, c, c, c, c, z, z, z, c, z, c
-                                       ,z, z, c, z, c, z, z, c, c, c, z, c, z, c, c, c
-                                       ,z, c, c, c, z, c, c, c, z, z, c, z, c, z, z, c]
-        c = rgba2word32 $ RGBA (0:. 115 :. 255:.()) 0
-        z = rgba2word32 $ RGBA (0:.0:.0:.()) 255                                    
-
-rgba2word32 :: Color RGBAFormat Word8 -> Word32
-rgba2word32 (RGBA (red:.green:.blue:.()) alpha) = red' .|. green' .|. blue' .|. alpha'
-  where
-    alpha' = fromIntegral alpha
-    blue'  = shift (fromIntegral blue)   8
-    green' = shift (fromIntegral green) 16
-    red'   = shift (fromIntegral red)   24
+        calcChunk flag = chunkFromList 4   [z, c, z, c, z, c, z, c, z, c, z, c, c, z, c, z
+                                           ,c, c, c, z, z, z, c, c, c, c, z, z, z, c, z, c
+                                           ,z, z, c, z, c, z, z, c, c, c, z, c, z, c, c, c
+                                           ,z, c, c, c, z, c, c, c, z, z, c, z, c, z, z, c]
+          where                                           
+            c = if flag then 1 else 0
+            z = if flag then 0 else 1
     
 initWindow :: Window -> IO ()
 initWindow win = idleCallback $= Just (postRedisplay (Just win) >> yield)
