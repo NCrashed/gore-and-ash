@@ -26,14 +26,21 @@ executable GoreAndAsh-Client
                    stb-image >=0.2.1 && <0.3,
                    network >=2.4.1 && <2.5,
                    network-transport >=0.3.0 && <0.4,
-                   distributed-process >=0.4.2 && <0.5
+                   distributed-process >=0.4.2 && <0.5,
+                   hashmap >=1.3.0 && <1.4,
+                   directory >=1.2.0 && <1.3,
+                   filepath >=1.3.0 && <1.4,
+                   either >=3.4.1 && <3.5,
+                   mtl >=2.1.2 && <2.2
                    
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
   hs-source-dirs:  
                    source/client, 
                    source/shared
-  Extensions:      CPP				   
+  Extensions:      
+                   CPP, 
+                   OverloadedStrings
   if os(windows)
     ld-options: --enable-stdcall-fixup
     C-sources: ./source/shared/Network/Transport/ntohl.c    
@@ -45,7 +52,10 @@ executable GoreAndAsh-Server
                    data-accessor >=0.2.2 && <0.3,
                    repa >=3.2.3 && <3.3,
                    network >=2.4.1 && <2.5,
-                   distributed-process >=0.4.2 && <0.5
+                   distributed-process >=0.4.2 && <0.5,
+                   directory >=1.2.0 && <1.3,
+                   filepath >=1.3.0 && <1.4,
+                   mtl >=2.1.2 && <2.2
              
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs

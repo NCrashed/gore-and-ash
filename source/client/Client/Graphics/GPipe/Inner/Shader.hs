@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, MultiParamTypeClasses, EmptyDataDecls, TypeSynonymInstances #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleInstances, MultiParamTypeClasses, EmptyDataDecls, TypeSynonymInstances, NoMonomorphismRestriction #-}
 -----------------------------------------------------------------------------
 --
 -- Module      :  Shader
