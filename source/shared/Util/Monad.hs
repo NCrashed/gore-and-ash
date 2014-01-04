@@ -13,15 +13,18 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Client.Game.System(
-      initGameSystem
-    ) where
-    
-import Control.Distributed.Process
-import System.FilePath
-import Client.Assets.Manager
+{-# LANGUAGE ScopedTypeVariables #-}
+module Util.Monad(
+    liftExceptions
+  ) where
+  
+import Control.Exception
+import Control.Monad.Trans (liftIO)  
+import Control.Monad.Trans.Either
 
-initGameSystem :: ProcessId -> Process ProcessId
-initGameSystem _ = spawnLocal $ do
-    _ <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
-    return ()
+-- | Catches all synchronous exceptions all transforms them into EitherT String
+-- | monad transformer. 
+liftExceptions :: forall a . IO a -> EitherT String IO a
+liftExceptions action = do
+  res <- liftIO (try action :: IO (Either SomeException a))
+  eitherT (left.show) right $ hoistEither res

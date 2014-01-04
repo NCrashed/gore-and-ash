@@ -13,12 +13,35 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
+{-# LANGUAGE ExistentialQuantification #-}
 module Client.Assets.Manager(
     ResourceManager()
+  , emptyResourceManager
+  , addNewFileSystemPack
   ) where
   
+import Prelude hiding (lookup)
 import Data.HashMap
 import Client.Assets.ResourcePack
-import Client.Assets.Resource
+import Client.Assets.Archive
+import Client.Assets.FileSystem
+import System.Log.Logger
+import Data.Functor ((<$>))
+import Control.Monad.Trans.Either (eitherT)
 
-data ResourceManager = HashMap String ResourcePack
+type ResourceManager = Map String SomePack
+
+data SomePack = forall a . (Archive a) => SomePack (ResourcePack a)
+
+emptyResourceManager :: ResourceManager
+emptyResourceManager = empty
+
+logg :: String -> IO ()
+logg = warningM "GoreAndAsh.ResourceManager"
+
+addNewFileSystemPack :: ResourceManager -> String -> FilePath -> IO ResourceManager
+addNewFileSystemPack mng name path = do
+  case name `lookup` mng of
+    Just (SomePack oldPack) -> finalizePack oldPack 
+    Nothing -> return ()
+  eitherT (\msg -> logg msg >> return mng) (\pack -> return $ insert name (SomePack pack) mng) $ newResourcePack name <$> newFileSystemArchive path
