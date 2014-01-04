@@ -56,6 +56,7 @@ getResource pack@(ResourcePack name archive cache) path =
       res <- loadResource =<< readArchiveFile archive path
       right (res, ResourcePack name archive (insert path (toDyn res) cache))
 
--- TODO: here
-setResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> b -> EitherT String IO ()
-setResource = undefined
+setResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> b -> EitherT String IO (ResourcePack a)
+setResource (ResourcePack name archive cache) path res = do
+  writeArchiveFile archive path =<< saveResource res
+  right $ ResourcePack name archive $ insert path (toDyn res) cache
