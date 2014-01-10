@@ -45,8 +45,8 @@ resourcePackPath (ResourcePack _ archive _) = archivePath archive
 newResourcePack :: (Archive a) => String -> a -> ResourcePack a
 newResourcePack name archive = ResourcePack name archive empty
 
-getResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> EitherT String IO (b, ResourcePack a) 
-getResource pack@(ResourcePack name archive cache) path =
+getResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> ResourceParams b -> EitherT String IO (b, ResourcePack a) 
+getResource pack@(ResourcePack name archive cache) path params =
   case lookup path cache of
     Nothing -> newres
     Just cached -> 
@@ -55,12 +55,12 @@ getResource pack@(ResourcePack name archive cache) path =
         Just res -> right (res, pack)
   where
     newres = do
-      res <- loadResource =<< readArchiveFile archive path
+      res <- loadResource' path params =<< readArchiveFile archive path
       right (res, ResourcePack name archive (insert path (toDyn res) cache))
 
-setResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> b -> EitherT String IO (ResourcePack a)
-setResource (ResourcePack name archive cache) path res = do
-  writeArchiveFile archive path =<< saveResource res
+setResource :: (Archive a, Resource b) => ResourcePack a -> FilePath -> ResourceParams b -> b -> EitherT String IO (ResourcePack a)
+setResource (ResourcePack name archive cache) path params res = do
+  writeArchiveFile archive path =<< saveResource' path params res
   right $ ResourcePack name archive $ insert path (toDyn res) cache
   
 finalizePack :: (Archive a) => ResourcePack a -> IO ()

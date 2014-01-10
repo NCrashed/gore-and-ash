@@ -40,6 +40,7 @@ import Data.Vec ((:.)(..), Vec3, Vec4, zipWith)
 import Prelude hiding (zipWith)
 import Data.Boolean
 import Data.Vec.Boolean
+import Data.Typeable
 
 -- | A GPU format with only an alpha value.
 -- These are the associated types in 'GPUFormat' and 'ColorFormat':

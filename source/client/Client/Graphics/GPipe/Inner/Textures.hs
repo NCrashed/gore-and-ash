@@ -1,4 +1,4 @@
-{-# LANGUAGE ParallelListComp, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, ScopedTypeVariables #-}
+{-# LANGUAGE ParallelListComp, TypeFamilies, MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, ScopedTypeVariables, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 --
 -- Module      :  Textures
@@ -29,6 +29,7 @@ module Client.Graphics.GPipe.Inner.Textures (
 ) where
 
 import Data.Vec ((:.)(..), Vec2, Vec3, Vec4)
+import Data.Typeable
 import Client.Graphics.GPipe.Inner.Shader
 import Client.Graphics.GPipe.Inner.Resources
 import Client.Graphics.GPipe.Inner.OutputMerger
@@ -54,6 +55,7 @@ import Data.List
 -- [@TextureFragmentCoord (Texture3D f)@] 'Vec3' @(@'Fragment' 'Float'@)@
 --  
 newtype Texture3D f = Texture3D WinMappedTexture
+  deriving (Typeable)
 -- | A 2D texture.
 -- 'Texture2D' @f@ has the following associated types in its 'Texture' instance:
 --
@@ -66,6 +68,7 @@ newtype Texture3D f = Texture3D WinMappedTexture
 -- [@TextureFragmentCoord (Texture2D f)@] 'Vec2' @(@'Fragment' 'Float'@)@
 --  
 newtype Texture2D f = Texture2D WinMappedTexture
+  deriving (Typeable)
 -- | A 1D texture. Assumes a frame buffer of height 1 when created from such.
 -- 'Texture1D' @f@ has the following associated types in its 'Texture' instance:
 --
@@ -78,6 +81,7 @@ newtype Texture2D f = Texture2D WinMappedTexture
 -- [@TextureFragmentCoord (Texture1D f)@] 'Fragment' 'Float'
 --  
 newtype Texture1D f = Texture1D WinMappedTexture
+  deriving (Typeable)
 -- | A cube texture. The sides of the cube are always specified in this order: Positive X, negative X,
 -- positive Y, negative Y, positive Z, negative Z.
 -- 'TextureCube' @f@ has the following associated types in its 'Texture' instance:
@@ -91,7 +95,8 @@ newtype Texture1D f = Texture1D WinMappedTexture
 -- [@TextureFragmentCoord (TextureCube f)@] 'Vec3' @(@'Fragment' 'Float'@)@
 --  
 newtype TextureCube f = TextureCube WinMappedTexture
-
+  deriving (Typeable)
+  
 class Texture t where
     -- | The color format of the texture, affects the type of the samples from the texture. 
     type TextureFormat t

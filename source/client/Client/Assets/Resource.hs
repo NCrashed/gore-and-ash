@@ -13,14 +13,29 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
+{-# LANGUAGE TypeFamilies #-}
 module Client.Assets.Resource(
     Resource(..)
+  , loadResource'
+  , saveResource'
   ) where
 
 import Data.Typeable
 import Control.Monad.Trans.Either
 import Data.ByteString.Lazy
 
+addResName :: String -> EitherT String IO a -> EitherT String IO a
+addResName name = bimapEitherT (\s -> "Resource name: " ++ name ++ ". " ++ s) id
+
+-- | Safe version of loadResource that adds resource name to the error string.
+loadResource' :: (Resource a) => String -> ResourceParams a -> ByteString -> EitherT String IO a
+loadResource' name p = addResName name . loadResource p
+
+-- | Safe version of saveResource that adds resource name to the error string.
+saveResource' :: (Resource a) => String -> ResourceParams a -> a -> EitherT String IO ByteString
+saveResource' name p = addResName name . saveResource p
+
 class Typeable a => Resource a where
-  loadResource :: ByteString -> EitherT String IO a
-  saveResource :: a -> EitherT String IO ByteString 
+  data ResourceParams a :: *
+  loadResource :: ResourceParams a -> ByteString -> EitherT String IO a
+  saveResource :: ResourceParams a -> a -> EitherT String IO ByteString

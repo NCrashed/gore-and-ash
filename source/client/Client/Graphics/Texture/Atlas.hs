@@ -29,6 +29,7 @@ import Data.HashMap
 import Data.List (foldl')
 import Client.Assets.Manager
 import Control.Monad.Trans.Either
+import Data.Functor
 
 -- | Texture atlas, assumes that subtextures has same size (will resize smaller ones to fit ceil)  
 data Atlas = forall f . (ColorFormat f) => Atlas 
@@ -87,7 +88,11 @@ removeFromAtlas (Atlas _ table tex) texs = Atlas True table' tex
 
 -- | Actually rerenders atlas inner final texture
 renderAtlas :: Atlas -> ResourceManager -> EitherT String IO Atlas
-renderAtlas = undefined
+renderAtlas oldAtlas@(Atlas modified table tex) mng 
+  | not modified = right oldAtlas
+  | otherwise    = Atlas False table <$> newtex
+  where
+    newtex = tex  
 
 -- | TODO: function to query atlas for subtexture uvs
 
