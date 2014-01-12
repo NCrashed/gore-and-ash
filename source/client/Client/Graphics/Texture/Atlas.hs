@@ -29,6 +29,7 @@ import Data.HashMap
 import Data.List (foldl')
 import Client.Assets.Manager
 import Control.Monad.Trans.Either
+import Data.List.Split
 import Data.Functor
 
 -- | Texture atlas, assumes that subtextures has same size (will resize smaller ones to fit ceil)  
@@ -86,13 +87,23 @@ removeFromAtlas (Atlas _ table tex) texs = Atlas True table' tex
     newPlace i = findPlace i (formShape newsize)
     newsize = size table - foldl' (\i subtex -> if subtex `member` table then i+1 else i) 0 texs
 
--- | Actually rerenders atlas inner final texture
+-- | Retrieves textures from resource manager and rerenders atlas
 renderAtlas :: Atlas -> ResourceManager -> EitherT String IO Atlas
 renderAtlas oldAtlas@(Atlas modified table tex) mng 
   | not modified = right oldAtlas
-  | otherwise    = Atlas False table <$> newtex
+  | otherwise    = right $ Atlas False table newtex
   where
     newtex = tex  
+
+-- | Number of textures, that can be transfered to gpu in the same time
+textureUnits :: Int 
+textureUnits = 5
+
+-- | Actually rerenders atlas inner texture
+atlasBuffer :: [Texture2D RGBFormat] -> FrameBuffer RGBFormat () ()
+atlasBuffer texs 
+  | length texs > textureUnits = undefined -- mconcat $ atlasBuffer <$> splitEvery 5 texs
+  | otherwise = undefined
 
 -- | TODO: function to query atlas for subtexture uvs
 

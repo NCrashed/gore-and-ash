@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, ScopedTypeVariables #-}
+{-# LANGUAGE RankNTypes, ScopedTypeVariables, FlexibleInstances #-}
 -----------------------------------------------------------------------------
 --
 -- Module      :  OutputMerger
@@ -45,10 +45,11 @@ module Client.Graphics.GPipe.Inner.OutputMerger (
     runFrameBufferInContext
 ) where
 
-import Client.Graphics.GPipe.Inner.Formats
+import Client.Graphics.GPipe.Inner.Formats as Formats
 import Client.Graphics.GPipe.Inner.Shader
 import Client.Graphics.GPipe.Inner.GPUStream
 import Client.Graphics.GPipe.Inner.Resources
+import Client.Graphics.GPipe.Inner.StrictIO
 import Graphics.Rendering.OpenGL hiding (RGBA, Blend, stencilMask, Color, ColorBuffer, DepthBuffer, StencilBuffer, Vertex)
 import qualified Graphics.Rendering.OpenGL as GL
 import Data.Vec (vec, (:.)(..), Vec2, Vec4)
@@ -111,14 +112,6 @@ newFrameBufferColorStencil :: ColorFormat f => Color f Float -> Stencil -> Frame
 newFrameBufferDepth :: Depth -> FrameBuffer () DepthFormat ()
 newFrameBufferDepthStencil :: Depth -> Stencil -> FrameBuffer () DepthFormat StencilFormat
 newFrameBufferStencil :: Stencil -> FrameBuffer () () StencilFormat
-
-ioEvaluateColor :: (Eq a, ColorFormat f) => a -> a -> Color f a -> ReaderT ContextCache IO (Vec4 a)
-ioEvaluateColor z e x = let (a:.b:.c:.d:.()) = fromColor z e x
-                        in do a' <- ioEvaluate a
-                              b' <- ioEvaluate b
-                              c' <- ioEvaluate c
-                              d' <- ioEvaluate d
-                              return (a':.b':.c':.d':.())
 
 setDefaultStates :: IO ()
 setDefaultStates = do frontFace $= CCW
@@ -408,7 +401,7 @@ getFrameBufferStencil f s@(w:.h:.()) fb p = do
     cache <- getCurrentOrSetHiddenContext
     runFrameBufferInContext cache s fb
     readPixels (Position 0 0) (Size (fromIntegral w) (fromIntegral h)) (PixelData StencilIndex (toGLDataType f) p)
-
+    
 -- | Creates and shows a new GPipe window. Use the last parameter to add extra GLUT callbacks to the window. Note that you can't register your own 'displayCallback' and 'reshapeCallback'.
 newWindow :: String     -- ^ The window title
           -> Vec2 Int   -- ^ The window position

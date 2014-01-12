@@ -42,9 +42,6 @@ module Client.Graphics.GPipe.Inner.Resources (
     saveContextCache,
     changeContextSize,
     getCurrentOrSetHiddenContext,
-    ioEvaluate,
-    evaluateDeep,
-    evaluatePtr,
     ShaderInfo,
     ShaderKey,
     ShaderKeyNode(..),
@@ -69,10 +66,8 @@ import Data.Maybe
 import Foreign.Ptr
 import System.IO.Unsafe (unsafePerformIO)
 import Data.IORef
-import Control.Exception (evaluate)
 import Foreign.ForeignPtr
 import System.Mem.Weak (addFinalizer)
-import Data.Unique
 import Data.ListTrie.Patricia.Map (TrieMap)
 import qualified Data.ListTrie.Patricia.Map as TrieMap
 import Data.ListTrie.Base.Map (WrappedIntMap)
@@ -342,16 +337,6 @@ getCurrentOrSetHiddenContext = do
     where
         setAndGetHiddenWindow = do GLUT.currentWindow $= Just (contextWindow hiddenWindowContextCache)
                                    return hiddenWindowContextCache
-
-evaluateDeep a = do evaluate (a==a)
-                    return a
-
-ioEvaluate :: Eq a => a -> ContextCacheIO a
-ioEvaluate = liftIO . evaluateDeep
-
-evaluatePtr p = do a <- peek (castPtr p :: Ptr CUChar)
-                   evaluate (a==a)
-                   return p
 
 ----------------------------------------------------
 -- Texture operations

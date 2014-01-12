@@ -1,4 +1,4 @@
-{-# LANGUAGE UndecidableInstances, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances, TypeFamilies, FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 --
 -- Module      :  Formats
@@ -48,45 +48,45 @@ import Data.Typeable
 -- [@CPUFormat AlphaFormat@] 'CPUFormat1Comp'
 --
 -- [@Color AlphaFormat a@] @Alpha a@
-data AlphaFormat = Alpha4 | Alpha8 | Alpha12 | Alpha16 deriving (Eq,Ord,Bounded,Enum,Show)
+data AlphaFormat = Alpha4 | Alpha8 | Alpha12 | Alpha16 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format with a single color component.
 -- These are the associated types in 'GPUFormat' and 'ColorFormat':
 --
 -- [@CPUFormat LuminanceFormat@] 'CPUFormat1Comp'
 --
 -- [@Color LuminanceFormat a@] @Luminance a@
-data LuminanceFormat = Luminance4 | Luminance8 | Luminance12 | Luminance16 | SLuminance8 deriving (Eq,Ord,Bounded,Enum,Show)
+data LuminanceFormat = Luminance4 | Luminance8 | Luminance12 | Luminance16 | SLuminance8 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format with a single color component and an alpha value.
 -- These are the associated types in 'GPUFormat' and 'ColorFormat':
 --
 -- [@CPUFormat LuminanceAlphaFormat@] 'CPUFormat2Comp'
 --
 -- [@Color LuminanceAlphaFormat a@] @LuminanceAlpha a a@
-data LuminanceAlphaFormat = Luminance4Alpha4 | Luminance6Alpha2 | Luminance8Alpha8 | Luminance12Alpha4 | Luminance12Alpha12 | Luminance16Alpha16 | SLuminance8Alpha8 deriving (Eq,Ord,Bounded,Enum,Show)
+data LuminanceAlphaFormat = Luminance4Alpha4 | Luminance6Alpha2 | Luminance8Alpha8 | Luminance12Alpha4 | Luminance12Alpha12 | Luminance16Alpha16 | SLuminance8Alpha8 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format with color components for red, green and blue.
 -- These are the associated types in 'GPUFormat' and 'ColorFormat':
 --
 -- [@CPUFormat RGBFormat@] 'CPUFormat3Comp'
 --
 -- [@Color RGBFormat a@] @RGB (@'Vec3'@ a)@
-data RGBFormat = R3G3B2 | RGB4 | RGB5 | RGB8 | RGB10 | RGB12 | RGB16 | SRGB8 deriving (Eq,Ord,Bounded,Enum,Show)
+data RGBFormat = R3G3B2 | RGB4 | RGB5 | RGB8 | RGB10 | RGB12 | RGB16 | SRGB8 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format with color components for red, green and blue, and an alpha value.
 -- These are the associated types in 'GPUFormat' and 'ColorFormat':
 --
 -- [@CPUFormat RGBAFormat@] 'CPUFormat4Comp'
 --
 -- [@Color RGBAFormat a@] @RGBA (@'Vec3'@ a) a@
-data RGBAFormat = RGBA2 | RGBA4 | RGB5A1 | RGBA8 | RGB10A2 | RGBA12 | RGBA16 | SRGBA8 deriving (Eq,Ord,Bounded,Enum,Show)
+data RGBAFormat = RGBA2 | RGBA4 | RGB5A1 | RGBA8 | RGB10A2 | RGBA12 | RGBA16 | SRGBA8 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format for a depth buffer value.
 -- This is the associated type in 'GPUFormat':
 --
 -- [@CPUFormat DepthFormat@] 'CPUFormat1Comp'
-data DepthFormat = Depth16 | Depth24 | Depth32 deriving (Eq,Ord,Bounded,Enum,Show)
+data DepthFormat = Depth16 | Depth24 | Depth32 deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 -- | A GPU format for a stencil buffer value.
 -- This is the associated type in 'GPUFormat':
 --
 -- [@CPUFormat StencilFormat@] 'CPUFormat1Comp'
-data StencilFormat = StencilFormat deriving (Eq,Ord,Bounded,Enum,Show)
+data StencilFormat = StencilFormat deriving (Eq,Ord,Bounded,Enum,Show,Typeable)
 
 -- | A CPU format for 4 components (i.e. a RGBA color).
 data CPUFormat4Comp = PerComp4 CPUFormat1Comp
@@ -98,7 +98,7 @@ data CPUFormat4Comp = PerComp4 CPUFormat1Comp
                         | UnsignedInt8_8_8_8_Rev
                         | UnsignedInt10_10_10_2
                         | UnsignedInt2_10_10_10_Rev
-                        deriving (Eq,Ord,Show)
+                        deriving (Eq,Ord,Show,Typeable)
 
 -- | A CPU format for 3 components (i.e. a RGB color).
 data CPUFormat3Comp = PerComp3 CPUFormat1Comp
@@ -106,11 +106,11 @@ data CPUFormat3Comp = PerComp3 CPUFormat1Comp
                         | UnsignedByte2_3_3_Rev
                         | UnsignedShort5_6_5
                         | UnsignedShort5_6_5_Rev
-                        deriving (Eq,Ord,Show)
+                        deriving (Eq,Ord,Show,Typeable)
 
 -- | A CPU format for 2 components (i.e. a LuminanceAlpha color).
 data CPUFormat2Comp = PerComp2 CPUFormat1Comp
-                        deriving (Eq,Ord,Show)
+                        deriving (Eq,Ord,Show,Typeable)
 
 -- | A CPU format for 1 component
 data CPUFormat1Comp = UnsignedByteFormat
@@ -121,7 +121,7 @@ data CPUFormat1Comp = UnsignedByteFormat
                         | UnsignedIntFormat
                         | IntFormat
                         | FloatFormat
-                        deriving (Eq,Ord,Show)
+                        deriving (Eq,Ord,Show,Typeable)
 
 class StorableCPUFormat a where
     sizeOfFormat :: a -> Int

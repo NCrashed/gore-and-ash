@@ -14,14 +14,13 @@
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 {-# LANGUAGE FlexibleInstances, UndecidableInstances, DeriveDataTypeable, RankNTypes, FlexibleContexts, TypeFamilies #-}
-module Clinet.Assets.Texture(
+module Client.Assets.Texture(
 
   ) where
   
 import Client.Graphics.GPipe
 import Client.Assets.Resource
 import Control.Monad.Trans.Either
-import Control.Monad
 import qualified Data.ByteString.Lazy     as BZ
 import Util.ByteString
 import Data.Typeable

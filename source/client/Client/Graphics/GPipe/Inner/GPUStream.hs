@@ -32,6 +32,7 @@ module Client.Graphics.GPipe.Inner.GPUStream (
 
 import Client.Graphics.GPipe.Inner.Shader
 import Client.Graphics.GPipe.Inner.Formats
+import Client.Graphics.GPipe.Inner.StrictIO
 import Data.Monoid
 import Data.Vec (Vec4)
 import Client.Graphics.GPipe.Inner.Resources

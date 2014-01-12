@@ -28,14 +28,15 @@ module Client.Graphics.GPipe.Inner.Textures (
     fromFrameBufferCubeDepth
 ) where
 
-import Data.Vec ((:.)(..), Vec2, Vec3, Vec4)
+import Data.Vec ((:.)(..), Vec2, Vec3)
 import Data.Typeable
 import Client.Graphics.GPipe.Inner.Shader
 import Client.Graphics.GPipe.Inner.Resources
 import Client.Graphics.GPipe.Inner.OutputMerger
+import Client.Graphics.GPipe.Inner.StrictIO
 import Foreign.Ptr
 import qualified Graphics.Rendering.OpenGL as GL
-import Graphics.Rendering.OpenGL (($=), get)
+import Graphics.Rendering.OpenGL (($=))
 import qualified Graphics.UI.GLUT as GLUT
 import System.IO.Unsafe (unsafePerformIO)
 import Client.Graphics.GPipe.Inner.Formats
@@ -164,7 +165,7 @@ instance ColorFormat f => Texture (Texture3D f) where
                 GL.texImage3D GL.NoProxy n i' size 0
                 (GL.PixelData (toGLPixelFormat (undefined::f)) (toGLDataType f') p))
                [(i,p) | i<- [0..] | p<- ps']
-              GL.textureLevelRange GL.Texture3D $= (0, fromIntegral $ length ps' - 1)
+              GL.textureLevelRange GL.Texture3D $= (0, fromIntegral $ length ps' - 1)    
     textureCPUFormatByteSize f (x:.y:.z:.()) = map (\(x,y,z)-> y*z*formatRowByteSize f x) [(x',y',z') | x' <- mipLevels x | y' <- mipLevels y | z' <- mipLevels z | _ <- mipLevels' (max x (max y z))]
     sample s (Texture3D t) v = sampleBinFunc "texture3D" Sampler3D s t v
     sampleBias s (Texture3D t) v b = sampleTernFunc "texture3D" Sampler3D s t v b
