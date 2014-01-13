@@ -15,7 +15,9 @@
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 module Client.Graphics.Common(
       paintSolid
+    , paintSolidDepth
     , emptyFrameBuffer
+    , emptyFrameBufferDepth
     , enlight
     , transform
     ) where
@@ -23,11 +25,17 @@ module Client.Graphics.Common(
 import Client.Graphics.GPipe
 import Data.Vec as Vec
     
-paintSolid :: FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth) -> FrameBuffer RGBFormat DepthFormat () -> FrameBuffer RGBFormat DepthFormat ()
-paintSolid = paintColorDepth Less True NoBlending (RGB $ vec True)
+paintSolid :: FragmentStream (Color RGBFormat (Fragment Float)) -> FrameBuffer RGBFormat () () -> FrameBuffer RGBFormat () ()
+paintSolid = paintColor NoBlending (RGB $ vec True)
 
-emptyFrameBuffer :: FrameBuffer RGBFormat DepthFormat ()
-emptyFrameBuffer = newFrameBufferColorDepth (RGB 0) 100
+paintSolidDepth :: FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth) -> FrameBuffer RGBFormat DepthFormat () -> FrameBuffer RGBFormat DepthFormat ()
+paintSolidDepth = paintColorDepth Less True NoBlending (RGB $ vec True)
+
+emptyFrameBuffer :: FrameBuffer RGBFormat () ()
+emptyFrameBuffer = newFrameBufferColor (RGB 0)
+
+emptyFrameBufferDepth :: FrameBuffer RGBFormat DepthFormat ()
+emptyFrameBufferDepth = newFrameBufferColorDepth (RGB 0) 100
     
 enlight :: Texture2D RGBFormat -> (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth) -> (Color RGBFormat (Fragment Float), FragmentDepth)
 enlight _ (normv, _, depth) = (RGB (toGPU (0:.0.45:.1:.()) * vec (normv `dot` toGPU (0:.0.45:.1:.()))), depth)

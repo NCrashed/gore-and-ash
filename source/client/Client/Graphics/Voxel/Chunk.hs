@@ -46,7 +46,7 @@ extractColor (GPUChunk texture) = sample (Sampler Point Clamp) texture
 -- | Draws boxed chunk into frame buffer to display. The last step of graphic pipe that
 -- | paints resulted fragments into framebuffer.
 chunkFrameBuffer :: GPUChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
-chunkFrameBuffer chunk angle size = paintSolid (rasterizedChunk chunk angle size) emptyFrameBuffer
+chunkFrameBuffer chunk angle size = paintSolidDepth (rasterizedChunk chunk angle size) emptyFrameBufferDepth
 
 -- | Rasterizes transformed screen quad and ray-casts chunk from each fragment. The main purpose to
 -- | extract view-projection matrix and it inverse form to pass into raycasing function.

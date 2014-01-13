@@ -66,4 +66,4 @@ litCube :: Texture2D RGBFormat -> Float -> Vec2 Int -> FragmentStream (Color RGB
 litCube tex angle size = fmap (enlight tex) $ rasterizedCube angle size
     
 cubeFrameBuffer :: Texture2D RGBFormat -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
-cubeFrameBuffer tex angle size = paintSolid (litCube tex angle size) emptyFrameBuffer
+cubeFrameBuffer tex angle size = paintSolidDepth (litCube tex angle size) emptyFrameBufferDepth

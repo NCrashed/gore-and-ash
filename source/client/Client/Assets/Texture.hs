@@ -15,7 +15,9 @@
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 {-# LANGUAGE FlexibleInstances, UndecidableInstances, DeriveDataTypeable, RankNTypes, FlexibleContexts, TypeFamilies #-}
 module Client.Assets.Texture(
-
+    TextureResource(..)
+  , TextureResource3D(..)
+  , ResourceParams(..) 
   ) where
   
 import Client.Graphics.GPipe

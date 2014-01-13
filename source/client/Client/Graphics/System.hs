@@ -30,30 +30,38 @@ import Graphics.UI.GLUT(
     , getArgsAndInitialize
     , ($=))
 
-import Client.Graphics.Boxed.Chunk
-import Game.Boxed.Chunk
-import Data.Maybe (fromJust)
+--import Client.Graphics.Boxed.Chunk
+--import Game.Boxed.Chunk
+--import Data.Maybe (fromJust)
+import Client.Assets.Manager
+import Client.Assets.Texture
+import Client.Graphics.Texture.Debug
+import System.FilePath
+import Control.Monad.Trans.Either
 
 initGraphicsSystem :: ProcessId -> Process ProcessId
 initGraphicsSystem _ = spawnLocal $ liftIO $ do
     _ <- getArgsAndInitialize
+    mng <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
     angleRef <- newIORef 0.0
-    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderFrame angleRef) initWindow
+    Right (TextureResource testTex1, _) <- runEitherT $ getResource mng "test:2S03.png" (Par2DRGB RGB8) 
+    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderFrame testTex1 angleRef) initWindow
     mainLoop
     
-renderFrame :: IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat ())
-renderFrame angleRef size = do
+renderFrame :: Texture2D RGBFormat -> IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat () ())
+renderFrame tex angleRef size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
-    return $ chunkFrameBuffer undefined (fromJust $ calcChunk (angle > pi)) angle size
-    where
-        calcChunk flag = chunkFromList 4   [z, c, z, c, z, c, z, c, z, c, z, c, c, z, c, z
-                                           ,c, c, c, z, z, z, c, c, c, c, z, z, z, c, z, c
-                                           ,z, z, c, z, c, z, z, c, c, c, z, c, z, c, c, c
-                                           ,z, c, c, c, z, c, c, c, z, z, c, z, c, z, z, c]
-          where                                           
-            c = if flag then 1 else 0
-            z = if flag then 0 else 1
+    return $ showTexture tex
+--    return $ chunkFrameBuffer undefined (fromJust $ calcChunk (angle > pi)) angle size
+--    where
+--        calcChunk flag = chunkFromList 4   [z, c, z, c, z, c, z, c, z, c, z, c, c, z, c, z
+--                                           ,c, c, c, z, z, z, c, c, c, c, z, z, z, c, z, c
+--                                           ,z, z, c, z, c, z, z, c, c, c, z, c, z, c, c, c
+--                                           ,z, c, c, c, z, c, c, c, z, z, c, z, c, z, z, c]
+--          where                                           
+--            c = if flag then 1 else 0
+--            z = if flag then 0 else 1
     
 initWindow :: Window -> IO ()
 initWindow win = idleCallback $= Just (postRedisplay (Just win) >> yield)

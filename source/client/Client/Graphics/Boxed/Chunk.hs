@@ -28,7 +28,7 @@ import Client.Graphics.PolyCube
 import Game.Boxed.Chunk
 
 chunkFrameBuffer :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
-chunkFrameBuffer atlas chunk angle size = paintSolid (litChunk atlas chunk angle size) emptyFrameBuffer
+chunkFrameBuffer atlas chunk angle size = paintSolidDepth (litChunk atlas chunk angle size) emptyFrameBufferDepth
 
 litChunk :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
 litChunk atlas chunk angle size = fmap (enlight atlas) $ rasterizedChunk chunk angle size

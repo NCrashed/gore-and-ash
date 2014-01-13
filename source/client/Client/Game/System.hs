@@ -18,10 +18,7 @@ module Client.Game.System(
     ) where
     
 import Control.Distributed.Process
-import System.FilePath
-import Client.Assets.Manager
 
 initGameSystem :: ProcessId -> Process ProcessId
 initGameSystem _ = spawnLocal $ do
-    _ <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
     return ()
