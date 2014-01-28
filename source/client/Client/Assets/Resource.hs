@@ -29,7 +29,7 @@ addResName name = bimapEitherT (\s -> "Resource name: " ++ name ++ ". " ++ s) id
 
 -- | Safe version of loadResource that adds resource name to the error string.
 loadResource' :: (Resource a) => String -> ResourceParams a -> ByteString -> EitherT String IO a
-loadResource' name p = addResName name . loadResource p
+loadResource' name p = addResName name . loadResource name p
 
 -- | Safe version of saveResource that adds resource name to the error string.
 saveResource' :: (Resource a) => String -> ResourceParams a -> a -> EitherT String IO ByteString
@@ -37,5 +37,5 @@ saveResource' name p = addResName name . saveResource p
 
 class Typeable a => Resource a where
   data ResourceParams a :: *
-  loadResource :: ResourceParams a -> ByteString -> EitherT String IO a
+  loadResource :: String -> ResourceParams a -> ByteString -> EitherT String IO a
   saveResource :: ResourceParams a -> a -> EitherT String IO ByteString
