@@ -1,4 +1,2 @@
 language: haskell
-before_install:
-    sudo apt-get install libdevil-dev
 ghc: 7.6

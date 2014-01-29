@@ -44,10 +44,10 @@ initGraphicsSystem _ = spawnLocal $ liftIO $ do
     _ <- getArgsAndInitialize
     mng <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
     -- angleRef <- newIORef 0.0
-    Right (TextureResource testTex1, mng') <- runEitherT $ getResource mng  "test:1S03.png" TextureNoParams
-    -- Right (TextureResource testTex2, _)    <- runEitherT $ getResource mng' "test:2S03.png" TextureNoParams
-
-    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderTexDebugFrame testTex1 testTex1) initWindow
+    Right (TextureResource testTex1, mng') <- runEitherT $ getResource mng  "test:1S03.png" $ Par2DRGBA RGBA8
+    Right (TextureResource testTex2, _)    <- runEitherT $ getResource mng' "test:2S03.png" $ Par2DRGBA RGBA8
+    
+    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderTexDebugFrame testTex1 testTex2) initWindow
     mainLoop
     
 renderTexDebugFrame :: (ColorFormat f1, ColorFormat f2) => Texture2D f1 -> Texture2D f2 -> Vec2 Int -> IO (FrameBuffer RGBFormat () ())
