@@ -26,7 +26,6 @@ import qualified Data.Array.Repa.Repr.ForeignPtr as R
 import Data.Word
 import Data.Functor
 import Foreign.ForeignPtr
-import Debug.Trace (trace)
 
 fromTexture :: Vec2 Int -> Texture2D RGBAFormat -> IO (R.Array R.F R.DIM3 Word8)
 fromTexture size tex = R.fromForeignPtr (getShape size) <$> loadBuffer
@@ -39,8 +38,8 @@ fromTexture size tex = R.fromForeignPtr (getShape size) <$> loadBuffer
     loadBuffer :: IO (ForeignPtr Word8)
     loadBuffer = do
       fptr <- mallocForeignPtrBytes bytes :: IO (ForeignPtr Word8)
-      withForeignPtr fptr $ trace (show size) $ getFrameBufferColor UnsignedInt8_8_8_8 size framebuffer
-      trace "!" $ return fptr
+      withForeignPtr fptr $ getFrameBufferColor UnsignedInt8_8_8_8 size framebuffer
+      return fptr
       where
         bytes = R.size $ getShape size
       

@@ -34,35 +34,31 @@ import Client.Graphics.Boxed.Chunk
 import Game.Boxed.Chunk
 import Data.Maybe (fromJust)
 import Client.Assets.Manager
-import Client.Assets.Texture
-import Client.Graphics.Texture.Render
+import Client.Graphics.Texture.Render (renderTexture)
+import Client.Graphics.Texture.Atlas
 import System.FilePath
 import Control.Monad.Trans.Either
-import Client.Graphics.Texture.Repa (cacheTexture)
 import Control.Monad (when)
+import Client.Assets.Texture
 
 initGraphicsSystem :: ProcessId -> Process ProcessId
 initGraphicsSystem _ = spawnLocal $ liftIO $ do
     _ <- getArgsAndInitialize
     mng <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
     -- angleRef <- newIORef 0.0
-    Right (TextureResource testTex1, mng') <- runEitherT $ getResource mng  "test:1S03.png" $ Par2DRGBA RGBA8
-    Right (TextureResource testTex2, _)    <- runEitherT $ getResource mng' "test:2S03.png" $ Par2DRGBA RGBA8
-     
-    ref <- newIORef True :: IO (IORef Bool)
-    atlasRef <- newIORef testTex1 :: IO (IORef (Texture2D RGBAFormat))
-    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderTexDebugFrame ref atlasRef testTex1 testTex2) initWindow
+    
+    atlasRef <- newIORef $ updateAtlas (emptyAtlas (128:.128:.())) ["test:1S03.png", "test:2S03.png", "test:3S03.png", "test:4S03.png"]
+    newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderTexDebugFrame atlasRef mng) initWindow
     mainLoop
     
-renderTexDebugFrame :: (ColorFormat f1, ColorFormat f2) => IORef Bool -> IORef (Texture2D RGBAFormat) -> Texture2D f1 -> Texture2D f2 -> Vec2 Int -> IO (FrameBuffer RGBAFormat () ())
-renderTexDebugFrame atlasRebuildRef atlasRef tex1 tex2 size = do
-  flag <- readIORef atlasRebuildRef
-  when flag $ do
-    atlas' <- cacheTexture size $ blitTextures size [(SomeTexture tex1, 0:.0:.(), 0.25:.0.25:.()), (SomeTexture tex2, 0.25:.0:.(), 0.25:.0.25:.())]
-    writeIORef atlasRef atlas' 
-    writeIORef atlasRebuildRef False
+renderTexDebugFrame :: IORef Atlas -> ResourceManager -> Vec2 Int -> IO (FrameBuffer RGBAFormat () ())
+renderTexDebugFrame atlasRef mng size = do
   atlas <- readIORef atlasRef
-  return $ renderTexture True atlas (0:.0:.()) (1:.1:.()) 
+  when (isAtlasModified atlas) $ do
+    Right (atlas', _) <- runEitherT $ renderAtlas atlas mng
+    writeIORef atlasRef atlas' 
+  atlas' <- readIORef atlasRef
+  return $ renderTexture False (atlasTexture atlas') (0:.0:.()) (1:.1:.()) 
     
 renderChunkFrame :: IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat ())
 renderChunkFrame angleRef size = do

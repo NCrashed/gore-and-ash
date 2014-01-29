@@ -16,7 +16,9 @@
 {-# LANGUAGE ExistentialQuantification, TupleSections #-}
 module Client.Graphics.Texture.Atlas(
     Atlas()
+  , SomeTexture(..)
   , isAtlasModified
+  , atlasTexture
   , emptyAtlas
   , atlasShape
   , updateAtlas
@@ -25,21 +27,27 @@ module Client.Graphics.Texture.Atlas(
   ) where
   
 import Client.Graphics.GPipe
+import Client.Graphics.Texture.Render
+import Client.Graphics.Texture.Repa
+import Client.Assets.Manager
+import Client.Assets.Texture
 import Data.HashMap
 import Data.List (foldl')
-import Client.Assets.Manager
 import Control.Monad.Trans.Either
-import Data.List.Split
 import Data.Functor
+import Control.Arrow (second, first)
+import Control.Monad.IO.Class (liftIO)
 
 -- | Texture atlas, assumes that subtextures has same size (will resize smaller ones to fit ceil)  
-data Atlas = forall f . (ColorFormat f) => Atlas 
+data Atlas = Atlas 
   -- | Modified flag, if true, then final texture should be rendered again
   Bool
+  -- | Element size in pixels 
+  (Vec2 Int)
   -- | Map from texture resource name to position in the atlas 
   LookupTable 
   -- | Final texture of the atlas
-  (Texture2D f)
+  (Texture2D RGBAFormat)
 
 type LookupTable = Map String SubtexPlace
 type SubtexPlace = Vec2 Int
@@ -47,66 +55,86 @@ type AtlasShape = Vec2 Int
 
 -- | Checks modified flag of the atlas
 isAtlasModified :: Atlas -> Bool
-isAtlasModified (Atlas f _ _) = f
+isAtlasModified (Atlas f _ _ _) = f
+
+-- | Gets altas current texture
+atlasTexture :: Atlas -> Texture2D RGBAFormat
+atlasTexture (Atlas _ _ _ tex) = tex
 
 -- | Returns empty atlas with empty texture inside
-emptyAtlas :: Atlas
-emptyAtlas = Atlas False empty (fromFrameBufferColor RGBA8 (0:.0:.()) (newFrameBufferColorDepth (RGBA 0 0) 100))
+emptyAtlas :: Vec2 Int -- ^ Atlas element size in pixels
+  -> Atlas
+emptyAtlas elemSize = Atlas False elemSize empty (fromFrameBufferColor RGBA8 (0:.0:.()) (newFrameBufferColorDepth (RGBA 0 0) 100))
 
 -- | Returns atlas shape, how subtextures will be layered into final texture
 atlasShape :: Atlas -> AtlasShape
-atlasShape (Atlas _ lookt _) = formShape $ size lookt 
+atlasShape (Atlas _ _ lookt _) = formShape $ size lookt 
 
 -- | Calculates square shape from number of subtextures
 formShape :: Int -> AtlasShape
-formShape n = let side = ceiling $ logBase 2 (fromIntegral n :: Double) in side :. side :. () 
+formShape n = let side = ceiling (sqrt (fromIntegral n :: Double)) in side :. side :. ()
 
 -- | Finds place for new texture in atlas filled with n textures and provided shape
-findPlace :: Int -> AtlasShape -> SubtexPlace
-findPlace n (shx:.shy:.()) = (n `mod` shx):.((n `div` shx) `mod` shy):.()
-
+toPlace :: Int -> AtlasShape -> SubtexPlace
+toPlace n (shx:.shy:.()) = (n `mod` shx):.((n `div` shx) `mod` shy):.()
+ 
 -- | Adds new textures to the atlas
 updateAtlas :: Atlas -> [String] -> Atlas
-updateAtlas (Atlas _ table tex) texs = Atlas True table'' tex
+updateAtlas (Atlas _ esize table tex) texs = Atlas True esize table'' tex
   where
     -- update old values
     table'  = snd $ mapAccum (\i _ -> (i+1, newPlace i) ) 0 table
     -- add new values
     table'' = snd $ foldl' (\(i, t) subtex -> (i+1, insert subtex (newPlace i) t)) (size table', table') texs'
     
-    newPlace i = findPlace i (formShape newsize)
+    newPlace i = toPlace i (formShape newsize)
     texs' = Prelude.filter (\e -> not $ e `member` table) texs
     newsize = size table + length texs
 
 -- | Removes textures from the atlas,
 removeFromAtlas :: Atlas -> [String] -> Atlas
-removeFromAtlas (Atlas _ table tex) texs = Atlas True table' tex
+removeFromAtlas (Atlas _ esize table tex) texs = Atlas True esize table' tex
   where
     table' = snd $ foldWithKey (\subtex _ (i, t)-> if subtex `member` delTable then (i, t) else (i+1, insert subtex (newPlace i) t)) (0, empty) table
     delTable = fromList $ Prelude.map (,()) texs
-    newPlace i = findPlace i (formShape newsize)
+    newPlace i = toPlace i (formShape newsize)
     newsize = size table - foldl' (\i subtex -> if subtex `member` table then i+1 else i) 0 texs
 
 -- | Retrieves textures from resource manager and rerenders atlas
-renderAtlas :: Atlas -> ResourceManager -> EitherT String IO Atlas
-renderAtlas oldAtlas@(Atlas modified table tex) mng 
-  | not modified = right oldAtlas
-  | otherwise    = right $ Atlas False table newtex
+renderAtlas :: Atlas -> ResourceManager -> EitherT String IO (Atlas, ResourceManager)
+renderAtlas oldAtlas@(Atlas modified esize table _) mng 
+  | not modified = right (oldAtlas, mng)
+  | otherwise    = do
+    (texs, newmng) <- collect $ first loadTex <$> toList table
+    atlasTex <- liftIO $ renderAtlasTexture esize texs (atlasShape oldAtlas)
+    right (Atlas False esize table atlasTex, newmng)
   where
-    newtex = tex  
+    loadTex :: String -> ResourceManager -> EitherT String IO (SomeTexture, ResourceManager)
+    loadTex name mng' = first (\(TextureResource t) -> SomeTexture t) <$> getResource mng' name (Par2DRGBA RGBA8)
+    
+    collect :: [(ResourceManager -> EitherT String IO (SomeTexture, ResourceManager), SubtexPlace)] -> EitherT String IO ([(SomeTexture, SubtexPlace)], ResourceManager)
+    collect = collect' mng []
+      where
+      collect' mng' _ [] = right ([], mng')
+      collect' mng' acc [(action, place)] = do
+        (tex, newmng) <- action mng'
+        right ((tex, place) : acc, newmng) 
+      collect' mng' acc ((action, place):es) = do
+        (tex, mng'') <- action mng'
+        collect' mng'' ((tex, place):acc) es
 
--- | Number of textures, that can be transfered to gpu in the same time
-textureUnits :: Int 
-textureUnits = 5
+-- | Calculates atlas region for subtexture. Coordinates are relative from 0 to 1.
+getPlaceRegion :: AtlasShape -> SubtexPlace -> (Vec2 Float, Vec2 Float)
+getPlaceRegion (shx:.shy:.()) (ix:.iy:.()) = (ox:.oy:.(), sx:.sy:.())
+  where
+    sx = 1 / fromIntegral shx
+    sy = 1 / fromIntegral shy
+    ox = sx * fromIntegral ix
+    oy = sy * fromIntegral iy
 
 -- | Actually rerenders atlas inner texture
-atlasBuffer :: [Texture2D RGBFormat] -> FrameBuffer RGBFormat () ()
-atlasBuffer texs 
-  | length texs > textureUnits = undefined -- mconcat $ atlasBuffer <$> splitEvery 5 texs
-  | otherwise = undefined
-
--- | TODO: function to query atlas for subtexture uvs
-
--- | TODO: need testing for functions
-
--- | TODO: also instance for resource for atlas
+renderAtlasTexture :: Vec2 Int -> [(SomeTexture, SubtexPlace)] -> AtlasShape -> IO (Texture2D RGBAFormat)
+renderAtlasTexture (esx:.esy:.()) texs shape@(shx:.shy:.()) = 
+  cacheTexture atlasSize $ blitTextures atlasSize $ second (getPlaceRegion shape) <$> texs
+  where
+    atlasSize = (esx*shx):.(esy*shy):.()
