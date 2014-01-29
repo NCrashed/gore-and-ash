@@ -15,8 +15,10 @@
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 module Client.Graphics.Common(
       paintSolid
+    , paintSolidAlpha
     , paintSolidDepth
     , emptyFrameBuffer
+    , emptyFrameBufferAlpha 
     , emptyFrameBufferDepth
     , enlight
     , transform
@@ -28,11 +30,17 @@ import Data.Vec as Vec
 paintSolid :: FragmentStream (Color RGBFormat (Fragment Float)) -> FrameBuffer RGBFormat () () -> FrameBuffer RGBFormat () ()
 paintSolid = paintColor NoBlending (RGB $ vec True)
 
+paintSolidAlpha :: FragmentStream (Color RGBAFormat (Fragment Float)) -> FrameBuffer RGBAFormat () () -> FrameBuffer RGBAFormat () ()
+paintSolidAlpha = paintColor NoBlending (RGBA (vec True) True)
+
 paintSolidDepth :: FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth) -> FrameBuffer RGBFormat DepthFormat () -> FrameBuffer RGBFormat DepthFormat ()
 paintSolidDepth = paintColorDepth Less True NoBlending (RGB $ vec True)
 
 emptyFrameBuffer :: FrameBuffer RGBFormat () ()
 emptyFrameBuffer = newFrameBufferColor (RGB 0)
+
+emptyFrameBufferAlpha :: FrameBuffer RGBAFormat () () 
+emptyFrameBufferAlpha = newFrameBufferColor (RGBA 0 1)
 
 emptyFrameBufferDepth :: FrameBuffer RGBFormat DepthFormat ()
 emptyFrameBufferDepth = newFrameBufferColorDepth (RGB 0) 100

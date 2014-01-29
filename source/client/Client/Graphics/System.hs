@@ -50,9 +50,11 @@ initGraphicsSystem _ = spawnLocal $ liftIO $ do
     newWindow "Test window" (100:.100:.()) (800:.600:.()) (renderTexDebugFrame testTex1 testTex2) initWindow
     mainLoop
     
-renderTexDebugFrame :: (ColorFormat f1, ColorFormat f2) => Texture2D f1 -> Texture2D f2 -> Vec2 Int -> IO (FrameBuffer RGBFormat () ())
-renderTexDebugFrame tex1 tex2 _ = return $ combineTextures tex1 tex2 (0.25:.0.25:.()) (0.25:.0.25:.())
-
+renderTexDebugFrame :: (ColorFormat f1, ColorFormat f2) => Texture2D f1 -> Texture2D f2 -> Vec2 Int -> IO (FrameBuffer RGBAFormat () ())
+renderTexDebugFrame tex1 tex2 size = return $ showTexture True atlas (0:.0:.()) (1:.1:.())
+  where
+    atlas = blitTextures size [(SomeTexture tex1, 0:.0:.(), 0.25:.0.25:.()), (SomeTexture tex2, 0.25:.0:.(), 0.25:.0.25:.())]
+    
 renderChunkFrame :: IORef Float -> Vec2 Int -> IO (FrameBuffer RGBFormat DepthFormat ())
 renderChunkFrame angleRef size = do
     angle <- readIORef angleRef

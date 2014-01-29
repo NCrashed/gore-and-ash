@@ -62,8 +62,6 @@ executable GoreAndAsh-Server
                    filepath >=1.3.0 && <1.4,
                    mtl >=2.1.2 && <2.2,
                    split >=0.2.2 && <0.3,
-                   Codec-Image-DevIL >=0.2.3 && <0.3,
-                   repa-devil >=0.3.2 && <0.4,
                    bitmap >=0.0.2 && <0.1,
                    stb-image >=0.2.1 && <0.3
              
