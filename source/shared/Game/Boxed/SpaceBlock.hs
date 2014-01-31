@@ -25,7 +25,7 @@ import Data.Hashable
 data SpaceBlock = SpaceBlock
 
 instance Hashable SpaceBlock where
-  hashWithSalt salt _ = salt
+  hashWithSalt salt _ = hash salt
   
 instance Block SpaceBlock where
   blockName    = const "Nothing"
