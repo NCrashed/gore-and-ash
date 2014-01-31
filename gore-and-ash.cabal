@@ -35,7 +35,8 @@ executable GoreAndAsh-Client
                    mtl >=2.1.2 && <2.2,
                    hslogger >=1.2.3 && <1.3,
                    bitmap >=0.0.2 && <0.1,
-                   stb-image >=0.2.1 && <0.3
+                   stb-image >=0.2.1 && <0.3,
+                   hashable >=1.1.2 && <1.2
                    
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
@@ -48,6 +49,7 @@ executable GoreAndAsh-Client
   if os(windows)
     ld-options: --enable-stdcall-fixup
     C-sources: ./source/shared/Network/Transport/ntohl.c    
+  other-modules:   Game.Boxed.Block
     
 executable GoreAndAsh-Server
   build-depends:   
@@ -62,7 +64,8 @@ executable GoreAndAsh-Server
                    mtl >=2.1.2 && <2.2,
                    split >=0.2.2 && <0.3,
                    bitmap >=0.0.2 && <0.1,
-                   stb-image >=0.2.1 && <0.3
+                   stb-image >=0.2.1 && <0.3,
+                   hashable >=1.1.2 && <1.2
              
   ghc-options:     -Wall -rtsopts -threaded
   main-is:         Main.hs
@@ -73,4 +76,5 @@ executable GoreAndAsh-Server
   if os(windows)
     ld-options: --enable-stdcall-fixup
     C-sources: ./source/shared/Network/Transport/ntohl.c               
+  other-modules:   Game.Boxed.Block
 

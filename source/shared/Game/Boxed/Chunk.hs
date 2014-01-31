@@ -31,32 +31,39 @@ module Game.Boxed.Chunk(
     , chunkFlatMapWithNeighbours
     ) where
     
+import Game.Boxed.BlockManager
 import qualified Data.Array.Repa as Repa
-import Data.Vec hiding (head, foldl, length)
+import Data.Vec as Vec hiding (head, foldl, length)
 import Data.Word
+import Data.Functor
 import Foreign (ForeignPtr, mallocForeignPtr)
 import Data.Array.Repa.Repr.ForeignPtr (computeIntoP)
 
-data BoxedChunk = BoxedChunk (Repa.Array Repa.U Repa.DIM3 Word32)
-
+data BoxedChunk = BoxedChunk
+  -- | Array with block ids 
+  (Repa.Array Repa.U Repa.DIM3 Word32)
+  -- | Block manager for mapping blocks ids and textures
+  BlockManager
+  
 chunkSize :: BoxedChunk -> Int
-chunkSize (BoxedChunk array) = if allEqual then head dimList else error "Chunk is not a cube!"
+chunkSize (BoxedChunk array _) = if allEqual then head dimList else error "Chunk is not a cube!"
     where
         dimList = Repa.listOfShape $ Repa.extent array
         allEqual = fst $ foldl (\(a, l) e -> (a && l == e, e)) (True, head dimList) dimList
         
-chunkFromList :: Int -> [Word32] -> Maybe BoxedChunk
-chunkFromList size list = if size*size*size == length list then Just $ chunk list else Nothing
-    where 
-        chunk = BoxedChunk . Repa.fromListUnboxed (Repa.Z Repa.:. (size :: Int) Repa.:. (size :: Int) Repa.:. (size :: Int))
+chunkFromList :: Int -> BlockManager -> [String] -> Maybe BoxedChunk
+chunkFromList sideSize mng list = if sideSize ^ (3 :: Int) /= length list then Nothing 
+  else chunk <$> sequence (findBlockIdByName mng <$> list)
+  where 
+    chunk ids = BoxedChunk (Repa.fromListUnboxed (Repa.ix3 sideSize sideSize sideSize) ids) mng
         
 chunkSizeVec :: BoxedChunk -> Vec3 Int
-chunkSizeVec (BoxedChunk array) = dimX :. dimY :. dimZ :. () 
+chunkSizeVec (BoxedChunk array _) = dimX :. dimY :. dimZ :. () 
   where
     (Repa.Z Repa.:. dimX Repa.:. dimY Repa.:. dimZ) = Repa.extent array
    
 getRawData :: BoxedChunk -> IO (ForeignPtr Word32)
-getRawData (BoxedChunk array) = do
+getRawData (BoxedChunk array _) = do
   ptr <- mallocForeignPtr :: IO (ForeignPtr Word32)
   computeIntoP ptr $ Repa.delay array 
   return ptr
@@ -82,11 +89,11 @@ leftNeighbour :: Neighbours -> Word32
 leftNeighbour = get n5
         
 chunkFlatMapWithNeighbours :: (Word32 -> Neighbours -> Vec3 Int -> b) -> BoxedChunk -> [b]
-chunkFlatMapWithNeighbours fun (BoxedChunk array) = Repa.toList $ Repa.traverse array id traverseFunc
+chunkFlatMapWithNeighbours fun (BoxedChunk array _) = Repa.toList $ Repa.traverse array id traverseFunc
     where
         traverseFunc lookFunc index = fun (lookFunc index) neigbours $ fromShape index
             where
-                neigbours = fromList $ fmap ((\v -> if inBoundes v then lookFunc v else 0) . Repa.addDim index) 
+                neigbours = Vec.fromList $ fmap ((\v -> if inBoundes v then lookFunc v else 0) . Repa.addDim index) 
                                 [up, down, forward, right, back, left]
                 inBoundes = Repa.inShape (Repa.extent array)
                 up      = coord   0   1   0
@@ -95,5 +102,5 @@ chunkFlatMapWithNeighbours fun (BoxedChunk array) = Repa.toList $ Repa.traverse 
                 right   = coord   0   0   1
                 back    = coord (-1)  0   0
                 left    = coord   0   0 (-1)
-                coord x y z = Repa.Z Repa.:. (x :: Int) Repa.:. (y :: Int) Repa.:. (z :: Int)
-                fromShape (Repa.Z Repa.:. x  Repa.:. y Repa.:. z ) = fromList [x, y, z]
+                coord = Repa.ix3
+                fromShape (Repa.Z Repa.:. x  Repa.:. y Repa.:. z ) = x :. y :. z :. ()

@@ -15,6 +15,8 @@
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 module Client.Graphics.Boxed.Chunk(
       chunkFrameBuffer
+    , chunkTriangles
+    , ChunkMesh
     ) where
     
 import Client.Graphics.GPipe
@@ -27,28 +29,30 @@ import Client.Graphics.Common
 import Client.Graphics.PolyCube
 import Game.Boxed.Chunk
 
-chunkFrameBuffer :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
+type ChunkMesh = PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
+
+chunkFrameBuffer :: Texture2D RGBFormat -> ChunkMesh -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
 chunkFrameBuffer atlas chunk angle size = paintSolidDepth (litChunk atlas chunk angle size) emptyFrameBufferDepth
 
-litChunk :: Texture2D RGBFormat -> BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
+litChunk :: Texture2D RGBFormat -> ChunkMesh -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
 litChunk atlas chunk angle size = fmap (enlight atlas) $ rasterizedChunk chunk angle size
     
-rasterizedChunk :: BoxedChunk -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
+rasterizedChunk :: ChunkMesh -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
 rasterizedChunk chunk angle size = fmap storeDepth $ rasterizeFront $ transformedChunk chunk angle size
     where
         storeDepth (normv, uv) = (normv, uv , fragDepth) 
         
-transformedChunk :: BoxedChunk -> Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
-transformedChunk chunk angle size = fmap (transform angle size) $ chunkTriangles chunk
+transformedChunk :: ChunkMesh -> Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
+transformedChunk chunk angle size = fmap (transform angle size) chunk
     
-chunkTriangles :: BoxedChunk -> PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
+chunkTriangles :: BoxedChunk -> ChunkMesh
 chunkTriangles chunk = mconcat $ chunkFlatMapWithNeighbours genBorders chunk
     where
-        genBorders :: Word32 -> Neighbours -> Vec3 Int -> PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
+        genBorders :: Word32 -> Neighbours -> Vec3 Int -> ChunkMesh
         genBorders val neighbours pos
             | val == 0  = mempty    
             | otherwise = mconcat $ fmap (genSide pos) $ zip neighboursSides $ neighboursGetters <*> pure neighbours
-        genSide :: Vec3 Int -> (PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float)), Word32) -> PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
+        genSide :: Vec3 Int -> (ChunkMesh, Word32) -> ChunkMesh
         genSide pos (side, val)
             | val /= 0  = mempty
             | otherwise = fmap (sideTransform pos) side
