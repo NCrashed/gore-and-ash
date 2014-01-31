@@ -22,6 +22,7 @@ module Client.Graphics.PolyCube(
     , cubeSideNegY
     , cubeSidePosZ
     , cubeSideNegZ
+    , transformedCube
     ) where
     
 import Client.Graphics.GPipe
@@ -62,8 +63,8 @@ rasterizedCube angle size = rasterizeFront $ fmap storeDepth $ transformedCube a
         storeDepth (posv@(_:._:.depth:.w:.()), (normv, uv)) = (posv, (normv, uv ,depth/w))
 
 
-litCube :: Texture2D RGBFormat -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
+litCube :: Texture2D RGBAFormat -> Float -> Vec2 Int -> FragmentStream (Color RGBAFormat (Fragment Float), FragmentDepth)
 litCube tex angle size = fmap (enlight tex) $ rasterizedCube angle size
     
-cubeFrameBuffer :: Texture2D RGBFormat -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
-cubeFrameBuffer tex angle size = paintSolidDepth (litCube tex angle size) emptyFrameBufferDepth
+cubeFrameBuffer :: Texture2D RGBAFormat -> Float -> Vec2 Int -> FrameBuffer RGBAFormat DepthFormat ()
+cubeFrameBuffer tex angle size = paintSolidDepthAlpha (litCube tex angle size) emptyFrameBufferDepthAlpha

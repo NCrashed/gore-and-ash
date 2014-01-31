@@ -17,11 +17,14 @@
 module Game.Boxed.Block(
     Block(..)
   , SomeBlock(..)
+  , blockTextures
   ) where
 
 import Game.Boxed.Side
 import Data.Hashable
 import Data.Typeable
+import Data.Functor
+import Data.List
 
 -- | Class for block materials. Material type describes all shared
 -- properties of blocks including name, textures, shape and behavior.
@@ -32,6 +35,10 @@ class (Hashable a) => Block a where
 data SomeBlock = forall a . (Block a) => SomeBlock a 
   deriving (Typeable)
 
+instance Block SomeBlock where
+  blockName (SomeBlock b) = blockName b
+  blockTexture (SomeBlock b) = blockTexture b
+  
 instance Hashable SomeBlock where
   hashWithSalt salt (SomeBlock b) = hashWithSalt salt b
 
@@ -40,3 +47,7 @@ instance Eq SomeBlock where
   
 instance Ord SomeBlock where
   (SomeBlock a) >= (SomeBlock b) = blockName a >= blockName b
+
+-- | Returns all textures used by the block.
+blockTextures :: Block a => a -> [String]
+blockTextures block = nub $ blockTexture block <$> [Upward .. ]

@@ -24,8 +24,10 @@ module Client.Graphics.Texture.Atlas(
   , updateAtlas
   , renderAtlas
   , removeFromAtlas
+  , textureUvInAtlas
   ) where
   
+import Prelude hiding (lookup)
 import Client.Graphics.GPipe
 import Client.Graphics.Texture.Render
 import Client.Graphics.Texture.Repa
@@ -138,3 +140,9 @@ renderAtlasTexture (esx:.esy:.()) texs shape@(shx:.shy:.()) =
   cacheTexture atlasSize $ blitTextures atlasSize $ second (getPlaceRegion shape) <$> texs
   where
     atlasSize = (esx*shx):.(esy*shy):.()
+
+-- | If texture is located in the atlas then returns texture region.    
+textureUvInAtlas :: Atlas -> String -> Maybe (Vec2 Float, Vec2 Float)
+textureUvInAtlas atlas@(Atlas _ _ table _) texname = do
+  place <- texname `lookup` table
+  return $ getPlaceRegion (atlasShape atlas) place

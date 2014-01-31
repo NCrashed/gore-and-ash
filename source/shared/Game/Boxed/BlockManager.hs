@@ -22,6 +22,7 @@ module Game.Boxed.BlockManager(
   , getBlockId
   , findBlockById
   , findBlockIdByName
+  , blockManagerTextures
   , module Game.Boxed.SpaceBlock
   , module Game.Boxed.Block
   ) where
@@ -29,8 +30,9 @@ module Game.Boxed.BlockManager(
 import Prelude hiding (lookup)
 import Game.Boxed.Block
 import Game.Boxed.SpaceBlock
-import Data.HashMap
+import Data.HashMap hiding (filter)
 import Data.Word
+import Data.List hiding (lookup, insert)
 
 data BlockManager = BlockManager {
      blockMap :: Map String SomeBlock
@@ -73,4 +75,7 @@ findBlockIdByName mng name = do
   block `lookup` blockIndexMap mng
   
 findBlockById :: BlockManager -> Word32 -> Maybe SomeBlock
-findBlockById = undefined
+findBlockById mng bid = bid `lookup` indexBlockMap mng 
+
+blockManagerTextures :: BlockManager -> [String]
+blockManagerTextures = filter (not . (`elem` blockTextures SpaceBlock)) . nub . concat . fmap blockTextures . elems . blockMap  

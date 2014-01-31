@@ -18,26 +18,24 @@ module Game.Boxed.Chunk(
     , chunkSize
     , chunkSizeVec
     , chunkFromList
+    , chunkBlockMng
     
     , getRawData
     
     , Neighbours()
-    , upNeighbour
-    , downNeighbour
-    , forwardNeighbour
-    , rightNeigbour
-    , backNeighbour
-    , leftNeighbour
+    , getNeighbour
     , chunkFlatMapWithNeighbours
     ) where
     
-import Game.Boxed.BlockManager
 import qualified Data.Array.Repa as Repa
 import Data.Vec as Vec hiding (head, foldl, length)
 import Data.Word
 import Data.Functor
 import Foreign (ForeignPtr, mallocForeignPtr)
 import Data.Array.Repa.Repr.ForeignPtr (computeIntoP)
+
+import Game.Boxed.BlockManager
+import Game.Boxed.Side
 
 data BoxedChunk = BoxedChunk
   -- | Array with block ids 
@@ -68,39 +66,29 @@ getRawData (BoxedChunk array _) = do
   computeIntoP ptr $ Repa.delay array 
   return ptr
 
+chunkBlockMng :: BoxedChunk -> BlockManager
+chunkBlockMng (BoxedChunk _ mng) = mng
+
 type Neighbours = Vec6 Word32
 
-upNeighbour :: Neighbours -> Word32
-upNeighbour = get n0
-
-downNeighbour :: Neighbours -> Word32
-downNeighbour = get n1
-
-forwardNeighbour :: Neighbours -> Word32
-forwardNeighbour = get n2
-
-rightNeigbour :: Neighbours -> Word32
-rightNeigbour = get n3
-
-backNeighbour :: Neighbours -> Word32
-backNeighbour = get n4
-
-leftNeighbour :: Neighbours -> Word32
-leftNeighbour = get n5
+getNeighbour :: Neighbours -> Side -> Word32
+getNeighbour = flip get'
+  where
+    get' Upward    = get n0
+    get' Downward  = get n1
+    get' Forward   = get n2
+    get' Backward  = get n3
+    get' Leftward  = get n4
+    get' Rightward = get n5 
+    get' _         = const 0
         
 chunkFlatMapWithNeighbours :: (Word32 -> Neighbours -> Vec3 Int -> b) -> BoxedChunk -> [b]
 chunkFlatMapWithNeighbours fun (BoxedChunk array _) = Repa.toList $ Repa.traverse array id traverseFunc
-    where
-        traverseFunc lookFunc index = fun (lookFunc index) neigbours $ fromShape index
-            where
-                neigbours = Vec.fromList $ fmap ((\v -> if inBoundes v then lookFunc v else 0) . Repa.addDim index) 
-                                [up, down, forward, right, back, left]
-                inBoundes = Repa.inShape (Repa.extent array)
-                up      = coord   0   1   0
-                down    = coord   0 (-1)  0
-                forward = coord   1   0   0
-                right   = coord   0   0   1
-                back    = coord (-1)  0   0
-                left    = coord   0   0 (-1)
-                coord = Repa.ix3
-                fromShape (Repa.Z Repa.:. x  Repa.:. y Repa.:. z ) = x :. y :. z :. ()
+  where
+    traverseFunc lookFunc index = fun (lookFunc index) neigbours $ fromShape index
+      where
+        neigbours = Vec.fromList $ fmap ((\v -> if inBoundes v then lookFunc v else 0) . Repa.addDim index) 
+                        $ coord . sideDirection <$> [Upward ..]
+        inBoundes = Repa.inShape (Repa.extent array)
+        coord (ix:.iy:.iz:.()) = Repa.ix3 ix iy iz
+        fromShape (Repa.Z Repa.:. x  Repa.:. y Repa.:. z ) = x :. y :. z :. ()           

@@ -19,6 +19,7 @@ module Client.Graphics.Texture.Render(
   , blitTexture
   , SomeTexture(..)
   , blitTextures
+  , remapCoords
   ) where
   
 import Client.Graphics.GPipe
@@ -88,7 +89,7 @@ textureQuad' vflip base tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = fmap texturi
 
 -- | Coordinates transformation from viewport system to specified local. This function maps points in particular
 -- region into texture coordinates.
-remapCoords :: Vec2 Float -> Vec2 Float -> Vec2 (Fragment Float) -> Vec2 (Fragment Float)
+remapCoords :: Vec2 Float -> Vec2 Float -> Vec2 (Shader t Float) -> Vec2 (Shader t Float)
 remapCoords (ox:.oy:.()) (sx:.sy:.()) (ux:.uy:.()) = ux':.uy':.()
   where
     ux' = (ux - toGPU ox) / toGPU sx

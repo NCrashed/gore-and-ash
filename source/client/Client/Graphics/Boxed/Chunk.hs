@@ -16,57 +16,107 @@
 module Client.Graphics.Boxed.Chunk(
       chunkFrameBuffer
     , chunkTriangles
-    , ChunkMesh
+    , ChunkModel(..)
+    , buildChunkModel
     ) where
-    
-import Client.Graphics.GPipe
+ 
+import Prelude as P   
 import Control.Applicative
+import Control.Monad.Trans.Either
 import Data.Vec as Vec
 import Data.Monoid
 import Data.Word
+import Data.Maybe
+import Data.Sequence as S
 
+import Client.Graphics.GPipe
 import Client.Graphics.Common
-import Client.Graphics.PolyCube
+import Client.Graphics.Mesh
+import Client.Graphics.Texture.Atlas
+import Client.Assets.Manager
+import Game.Boxed.Side
 import Game.Boxed.Chunk
+import Game.Boxed.BlockManager
+import Client.Graphics.GPipe.Inner.Formats (toColor)
+import Client.Graphics.PolyCube (cube)
+import Debug.Trace (trace)
 
-type ChunkMesh = PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
+data ChunkModel = ChunkModel Mesh Atlas
 
-chunkFrameBuffer :: Texture2D RGBFormat -> ChunkMesh -> Float -> Vec2 Int -> FrameBuffer RGBFormat DepthFormat ()
-chunkFrameBuffer atlas chunk angle size = paintSolidDepth (litChunk atlas chunk angle size) emptyFrameBufferDepth
+buildChunkAtlas :: BoxedChunk -> ResourceManager -> EitherT String IO (Atlas, ResourceManager)
+buildChunkAtlas chunk = renderAtlas atlas 
+  where
+    atlas = updateAtlas (emptyAtlas 128) $ blockManagerTextures $ chunkBlockMng chunk 
+  
+buildChunkModel :: BoxedChunk -> ResourceManager -> EitherT String IO (ChunkModel, ResourceManager)
+buildChunkModel chunk resMng = do
+   (atlas, resMng') <- buildChunkAtlas chunk resMng
+   let model = chunkTriangles chunk atlas
+   return $ (ChunkModel model atlas, resMng')
+   
+chunkFrameBuffer :: ChunkModel -> Float -> Vec2 Int -> FrameBuffer RGBAFormat DepthFormat ()
+chunkFrameBuffer model angle size = paintSolidDepthAlpha (litChunk model angle size) emptyFrameBufferDepthAlpha
 
-litChunk :: Texture2D RGBFormat -> ChunkMesh -> Float -> Vec2 Int -> FragmentStream (Color RGBFormat (Fragment Float), FragmentDepth)
-litChunk atlas chunk angle size = fmap (enlight atlas) $ rasterizedChunk chunk angle size
-    
-rasterizedChunk :: ChunkMesh -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
+litChunk :: ChunkModel -> Float -> Vec2 Int -> FragmentStream (Color RGBAFormat (Fragment Float), FragmentDepth)
+litChunk (ChunkModel mesh atlas) angle size = fmap texturise $ rasterizedChunk mesh angle size
+  where
+    texturise (normv, uv, depth) = (sample (Sampler Linear Wrap) (atlasTexture atlas) uv, depth) --(toColor (0:.0.45:.1:.1:.()), depth)
+
+rasterizedChunk :: Mesh -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
 rasterizedChunk chunk angle size = fmap storeDepth $ rasterizeFront $ transformedChunk chunk angle size
     where
         storeDepth (normv, uv) = (normv, uv , fragDepth) 
         
-transformedChunk :: ChunkMesh -> Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
-transformedChunk chunk angle size = fmap (transform angle size) chunk
+transformedChunk :: Mesh -> Float -> Vec2 Int -> PrimitiveStream Triangle (Vec4 (Vertex Float), (Vec3 (Vertex Float), Vec2 (Vertex Float)))
+transformedChunk chunk angle size = fmap (transform angle size) $ renderMesh chunk
     
-chunkTriangles :: BoxedChunk -> ChunkMesh
-chunkTriangles chunk = mconcat $ chunkFlatMapWithNeighbours genBorders chunk
+chunkTriangles :: BoxedChunk -> Atlas -> Mesh
+chunkTriangles chunk atlas = mconcat $ chunkFlatMapWithNeighbours genBorders chunk
     where
-        genBorders :: Word32 -> Neighbours -> Vec3 Int -> ChunkMesh
+        genBorders :: Word32 -> Neighbours -> Vec3 Int -> Mesh
         genBorders val neighbours pos
             | val == 0  = mempty    
-            | otherwise = mconcat $ fmap (genSide pos) $ zip neighboursSides $ neighboursGetters <*> pure neighbours
-        genSide :: Vec3 Int -> (ChunkMesh, Word32) -> ChunkMesh
-        genSide pos (side, val)
-            | val /= 0  = mempty
-            | otherwise = fmap (sideTransform pos) side
+            | otherwise = mconcat $ fmap (genSide val pos neighbours) [Upward ..]
             
-        neighboursGetters = [upNeighbour,  downNeighbour, forwardNeighbour, rightNeigbour, backNeighbour, leftNeighbour]
-        neighboursSides   = [cubeSidePosY, cubeSideNegY,  cubeSidePosX,     cubeSidePosZ,  cubeSideNegX,  cubeSideNegZ]
+        genSide :: Word32 -> Vec3 Int -> Neighbours -> Side -> Mesh
+        genSide origVal pos neighbours side
+            | val /= 0  = mempty
+            | otherwise = fmap (sideTransform uvOrigin uvSize pos) sideMesh
+            where
+              val = getNeighbour neighbours side
+              sideMesh = getSideMesh side
+              (uvOrigin, uvSize) = fromMaybe (0:.0:.(), 1:.1:.()) $ textureUvInAtlas atlas =<< flip blockTexture side <$> findBlockById manager origVal
+                   
+        manager = chunkBlockMng chunk
         
-        sideTransform :: Vec3 Int -> (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float)) -> (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
-        sideTransform (cx:.cy:.cz:.()) (pos, normv, uv) = (Vec.take n3 newPos, normv, uv)
+        sideTransform :: Vec2 Float -> Vec2 Float -> Vec3 Int -> (Vec3 Float, Vec3 Float, Vec2 Float) -> (Vec3 Float, Vec3 Float, Vec2 Float)
+        sideTransform uvOrigin uvSize (cx:.cy:.cz:.()) (pos, normv, uv) = (Vec.take n3 newPos, normv, uv')
             where
             cellSize :: Vec3 Float
             cellSize = 1.0 / fromIntegral (chunkSize chunk)
             chunkPos :: Vec3 Float
-            chunkPos = fromList $ fmap fromIntegral [cx, cy, cz]
-            transMat :: Mat44 (Vertex Float)
-            transMat = toGPU $ scaling cellSize `multmm` translation chunkPos
-            newPos = transMat `multmv` (homPoint pos :: Vec4 (Vertex Float))      
+            chunkPos = Vec.fromList $ fmap fromIntegral [cx, cy, cz]
+            transMat :: Mat44 Float
+            transMat = scaling cellSize `multmm` translation chunkPos
+            newPos = transMat `multmv` (homPoint pos :: Vec4 Float)
+            uv' = remapCoords uvOrigin uvSize uv
+            
+-- | Coordinates transformation from viewport system to specified local. This function maps points in particular
+-- region into texture coordinates.
+remapCoords :: Vec2 Float -> Vec2 Float -> Vec2 Float -> Vec2 Float
+remapCoords (ox:.oy:.()) (sx:.sy:.()) (ux:.uy:.()) = ux':.uy':.()
+  where
+    ux' = ux * sx + ox
+    uy' = uy * sy + oy
+    
+getSideMesh :: Side -> Mesh
+getSideMesh = MeshContainer TriangleStrip . S.fromList . side
+  where
+  uvs = [0:.0:.(), 0:.1:.(), 1:.0:.(), 1:.1:.()]
+  side Upward    = P.zip3 [0:.1:.1:.(), 1:.1:.1:.(), 0:.1:.0:.(), 1:.1:.0:.()] (repeat (0:.1:.0:.()))    uvs 
+  side Downward  = P.zip3 [0:.0:.0:.(), 1:.0:.0:.(), 0:.0:.1:.(), 1:.0:.1:.()] (repeat (0:.(-1):.0:.())) uvs
+  side Forward   = P.zip3 [1:.0:.0:.(), 1:.1:.0:.(), 1:.0:.1:.(), 1:.1:.1:.()] (repeat (1:.0:.0:.()))    uvs
+  side Backward  = P.zip3 [0:.0:.1:.(), 0:.1:.1:.(), 0:.0:.0:.(), 0:.1:.0:.()] (repeat ((-1):.0:.0:.())) uvs
+  side Rightward = P.zip3 [1:.0:.1:.(), 1:.1:.1:.(), 0:.0:.1:.(), 0:.1:.1:.()] (repeat (0:.0:.1:.()))    uvs
+  side Leftward  = P.zip3 [0:.0:.0:.(), 0:.1:.0:.(), 1:.0:.0:.(), 1:.1:.0:.()] (repeat (0:.0:.(-1):.())) uvs
+  side _ = []        
