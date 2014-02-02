@@ -28,7 +28,7 @@ import Client.Graphics.System
 exitMsg :: (ProcessId, String) -> Process ()
 exitMsg (_, msg) = case msg of
     "exit" -> liftIO exitSuccess
-    _      -> return ()
+    _      -> return ()  
     
 main :: IO ()
 main = do

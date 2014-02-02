@@ -74,6 +74,8 @@ import Data.ListTrie.Base.Map (WrappedIntMap)
 import Control.Monad.Trans.Reader
 import Control.Monad.IO.Class
 
+import Debug.Trace
+
 data VertexBuffer = VertexBuffer BufferObject Int
 data IndexBuffer = IndexBuffer BufferObject Int DataType
 type UniformLocationSet = (UniformLocation,UniformLocation,UniformLocation, Map SamplerType UniformLocation)

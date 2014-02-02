@@ -137,7 +137,7 @@ getPlaceRegion (shx:.shy:.()) (ix:.iy:.()) = (ox:.oy:.(), sx:.sy:.())
 -- | Actually rerenders atlas inner texture
 renderAtlasTexture :: Vec2 Int -> [(SomeTexture, SubtexPlace)] -> AtlasShape -> IO (Texture2D RGBAFormat)
 renderAtlasTexture (esx:.esy:.()) texs shape@(shx:.shy:.()) = 
-  cacheTexture atlasSize $ blitTextures atlasSize $ second (getPlaceRegion shape) <$> texs
+  cacheTexture atlasSize $ blitTextures atlasSize $ second (getPlaceRegion shape) <$> texs --  
   where
     atlasSize = (esx*shx):.(esy*shy):.()
 

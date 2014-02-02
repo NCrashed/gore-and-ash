@@ -16,6 +16,7 @@
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 module Client.Graphics.System(
       initGraphicsSystem
+    , testMainFunc
     ) where
     
 import Control.Distributed.Process
@@ -45,6 +46,8 @@ import Control.Monad (when)
 import Client.Graphics.PolyCube (cubeFrameBuffer)
 import Client.Graphics.Common (emptyFrameBufferDepthAlpha)
 
+import Client.Assets.Texture
+
 initGraphicsSystem :: ProcessId -> Process ProcessId
 initGraphicsSystem _ = spawnLocal $ liftIO $ do
     _ <- getArgsAndInitialize
@@ -53,6 +56,14 @@ initGraphicsSystem _ = spawnLocal $ liftIO $ do
     newWindow "Gore & Ash" (100:.100:.()) (800:.600:.()) renderFunc initWindow
     mainLoop
 
+testMainFunc :: IO ()
+testMainFunc = do
+    _ <- getArgsAndInitialize
+   
+    renderFunc <- prepareChunkFrame
+    newWindow "Gore & Ash" (100:.100:.()) (800:.600:.()) renderFunc initWindow
+    mainLoop
+    
 prepareTexDebugFrame :: IO (Vec2 Int -> IO (FrameBuffer RGBAFormat () ()))
 prepareTexDebugFrame = do
   mng <- liftIO $ addNewFileSystemPack emptyResourceManager "test" ("media" </> "test")
@@ -74,10 +85,7 @@ prepareChunkFrame = do
   angleRef <- newIORef 0.0
   let Right blockMng = registerBlocks
   Right (chunk@(ChunkModel _ atlas), _) <- runEitherT $ buildChunkModel (fromJust $ calcChunk blockMng) resMng
---  return $ const $ return $ renderTexture False (atlasTexture atlas) (0:.0:.()) (1:.1:.()) 
-  counter <- newIORef 0
-  return $ renderChunkFrame counter angleRef chunk
---  return $ renderCubeFrame angleRef (atlasTexture atlas) 
+  return $ renderChunkFrame  angleRef chunk
   where
     calcChunk mng = chunkFromList 4 mng [z, f, z, s, z, f, z, s, z, f, z, s, s, z, s, z
                                         ,f, s, f, z, z, z, f, f, s, s, z, z, z, f, z, s
@@ -91,15 +99,11 @@ prepareChunkFrame = do
       mng <- registerBlock emptyBlockManager $ uniformBlock "Plating" "test:1S03.png"
       registerBlock mng $ uniformBlock "Metal" "test:2S03.png"
 
-renderChunkFrame :: IORef Int -> IORef Float -> ChunkModel -> Vec2 Int -> IO (FrameBuffer RGBAFormat DepthFormat ())
-renderChunkFrame counter angleRef chunk size = do
---  n <- readIORef counter
---  modifyIORef counter (+1) 
---  if (n > 5000) then do
+renderChunkFrame :: IORef Float -> ChunkModel -> Vec2 Int -> IO (FrameBuffer RGBAFormat DepthFormat ())
+renderChunkFrame angleRef chunk size = do
     angle <- readIORef angleRef
     writeIORef angleRef ((angle + 0.005) `mod'` (2*pi))
     return $ chunkFrameBuffer chunk angle size
---  else return $ emptyFrameBufferDepthAlpha
     
 renderCubeFrame :: IORef Float -> Texture2D RGBAFormat -> Vec2 Int -> IO (FrameBuffer RGBAFormat DepthFormat ())
 renderCubeFrame angleRef tex size = do

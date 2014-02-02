@@ -38,7 +38,7 @@ executable GoreAndAsh-Client
                    stb-image >=0.2.1 && <0.3,
                    hashable >=1.1.2 && <1.2
                    
-  ghc-options:     -Wall -rtsopts -threaded
+  ghc-options:     -Wall -rtsopts
   main-is:         Main.hs
   hs-source-dirs:  
                    source/client, 

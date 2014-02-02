@@ -37,9 +37,6 @@ import Client.Assets.Manager
 import Game.Boxed.Side
 import Game.Boxed.Chunk
 import Game.Boxed.BlockManager
-import Client.Graphics.GPipe.Inner.Formats (toColor)
-import Client.Graphics.PolyCube (cube)
-import Debug.Trace (trace)
 
 data ChunkModel = ChunkModel Mesh Atlas
 
@@ -52,7 +49,7 @@ buildChunkModel :: BoxedChunk -> ResourceManager -> EitherT String IO (ChunkMode
 buildChunkModel chunk resMng = do
    (atlas, resMng') <- buildChunkAtlas chunk resMng
    let model = chunkTriangles chunk atlas
-   return $ (ChunkModel model atlas, resMng')
+   return (ChunkModel model atlas, resMng')
    
 chunkFrameBuffer :: ChunkModel -> Float -> Vec2 Int -> FrameBuffer RGBAFormat DepthFormat ()
 chunkFrameBuffer model angle size = paintSolidDepthAlpha (litChunk model angle size) emptyFrameBufferDepthAlpha
@@ -60,7 +57,7 @@ chunkFrameBuffer model angle size = paintSolidDepthAlpha (litChunk model angle s
 litChunk :: ChunkModel -> Float -> Vec2 Int -> FragmentStream (Color RGBAFormat (Fragment Float), FragmentDepth)
 litChunk (ChunkModel mesh atlas) angle size = fmap texturise $ rasterizedChunk mesh angle size
   where
-    texturise (normv, uv, depth) = (sample (Sampler Linear Wrap) (atlasTexture atlas) uv, depth) --(toColor (0:.0.45:.1:.1:.()), depth)
+    texturise (_, uv, depth) = (sample (Sampler Linear Wrap) (atlasTexture atlas) uv, depth)
 
 rasterizedChunk :: Mesh -> Float -> Vec2 Int -> FragmentStream (Vec3 (Fragment Float), Vec2 (Fragment Float), FragmentDepth)
 rasterizedChunk chunk angle size = fmap storeDepth $ rasterizeFront $ transformedChunk chunk angle size
