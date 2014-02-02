@@ -13,20 +13,13 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-{-# LANGUAGE LambdaCase #-}
-module Game.Boxed.SpaceBlock(
-    SpaceBlock(..)
+{-# LANGUAGE TypeOperators #-}
+module Util.Vec(
+
   ) where
   
-import Game.Boxed.Block
 import Data.Hashable
+import Data.Vec
 
--- | Special block type that represents empty space
-data SpaceBlock = SpaceBlock deriving (Eq)
-
-instance Hashable SpaceBlock where
-  hashWithSalt salt _ = hash salt
-  
-instance Block SpaceBlock where
-  blockName    = const "Nothing"
-  blockTexture = const . const ""
+instance (Hashable a, Hashable b) => Hashable (a :. b) where
+  hashWithSalt salt (a :. b) = hashWithSalt salt a + hashWithSalt salt b

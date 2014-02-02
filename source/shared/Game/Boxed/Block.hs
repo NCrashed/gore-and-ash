@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -28,7 +28,7 @@ import Data.List
 
 -- | Class for block materials. Material type describes all shared
 -- properties of blocks including name, textures, shape and behavior.
-class (Hashable a) => Block a where
+class (Hashable a, Eq a) => Block a where
   blockName    :: a -> String
   blockTexture :: a -> Side -> String
   

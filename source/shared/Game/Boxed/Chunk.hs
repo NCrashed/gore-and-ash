@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2013-2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -25,6 +25,9 @@ module Game.Boxed.Chunk(
     , Neighbours()
     , getNeighbour
     , chunkFlatMapWithNeighbours
+    
+    , readBlockId
+    , getChunkBlock
     ) where
     
 import qualified Data.Array.Repa as Repa
@@ -36,6 +39,8 @@ import Data.Array.Repa.Repr.ForeignPtr (computeIntoP)
 
 import Game.Boxed.BlockManager
 import Game.Boxed.Side
+import Util.Convert
+
 
 data BoxedChunk = BoxedChunk
   -- | Array with block ids 
@@ -56,9 +61,7 @@ chunkFromList sideSize mng list = if sideSize ^ (3 :: Int) /= length list then N
     chunk ids = BoxedChunk (Repa.fromListUnboxed (Repa.ix3 sideSize sideSize sideSize) ids) mng
         
 chunkSizeVec :: BoxedChunk -> Vec3 Int
-chunkSizeVec (BoxedChunk array _) = dimX :. dimY :. dimZ :. () 
-  where
-    (Repa.Z Repa.:. dimX Repa.:. dimY Repa.:. dimZ) = Repa.extent array
+chunkSizeVec (BoxedChunk array _) = toVec $ Repa.extent array 
    
 getRawData :: BoxedChunk -> IO (ForeignPtr Word32)
 getRawData (BoxedChunk array _) = do
@@ -85,10 +88,17 @@ getNeighbour = flip get'
 chunkFlatMapWithNeighbours :: (Word32 -> Neighbours -> Vec3 Int -> b) -> BoxedChunk -> [b]
 chunkFlatMapWithNeighbours fun (BoxedChunk array _) = Repa.toList $ Repa.traverse array id traverseFunc
   where
-    traverseFunc lookFunc index = fun (lookFunc index) neigbours $ fromShape index
+    traverseFunc lookFunc index = fun (lookFunc index) neigbours $ toVec index
       where
         neigbours = Vec.fromList $ fmap ((\v -> if inBoundes v then lookFunc v else 0) . Repa.addDim index) 
-                        $ coord . sideDirection <$> [Upward ..]
+                        $ toShape . sideDirection <$> [Upward ..]
         inBoundes = Repa.inShape (Repa.extent array)
-        coord (ix:.iy:.iz:.()) = Repa.ix3 ix iy iz
-        fromShape (Repa.Z Repa.:. x  Repa.:. y Repa.:. z ) = x :. y :. z :. ()           
+
+-- | Returns block id located in specified location.
+readBlockId :: BoxedChunk -> Vec3 Int -> Word32
+readBlockId (BoxedChunk array _) = Repa.index array . toShape
+
+-- | Returns block located in specified location. If manager don't
+-- know id, default empty block is returned.     
+getChunkBlock :: BoxedChunk -> Vec3 Int -> SomeBlock
+getChunkBlock (BoxedChunk array mng) = maybe (SomeBlock SpaceBlock) SomeBlock . findBlockById mng . Repa.index array . toShape

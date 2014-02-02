@@ -1,4 +1,4 @@
--- Copyright 2014 Anton Gushcha
+-- Copyright 2013 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -13,20 +13,7 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-{-# LANGUAGE LambdaCase #-}
-module Game.Boxed.SpaceBlock(
-    SpaceBlock(..)
+module Client.Graphics.Boxed.Model(
+
   ) where
   
-import Game.Boxed.Block
-import Data.Hashable
-
--- | Special block type that represents empty space
-data SpaceBlock = SpaceBlock deriving (Eq)
-
-instance Hashable SpaceBlock where
-  hashWithSalt salt _ = hash salt
-  
-instance Block SpaceBlock where
-  blockName    = const "Nothing"
-  blockTexture = const . const ""

@@ -30,7 +30,9 @@ type Mesh = MeshContainer (Vec3 Float, Vec3 Float, Vec2 Float)
 data MeshContainer a = MeshContainer Triangle (Seq a)
 
 renderMesh :: Mesh -> PrimitiveStream Triangle (Vec3 (Vertex Float), Vec3 (Vertex Float), Vec2 (Vertex Float))
-renderMesh (MeshContainer tr vecs) = toGPUStream tr $ toList vecs
+renderMesh (MeshContainer tr vecs) = toGPUStream tr $ list
+  where
+    list = toList vecs
 
 instance Functor MeshContainer where
   fmap f (MeshContainer tr d) = MeshContainer tr (fmap f d)

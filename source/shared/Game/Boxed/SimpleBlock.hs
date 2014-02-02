@@ -27,6 +27,9 @@ import Data.Hashable
 -- | The simplest kind of blocks - cubes with textures.
 data SimpleBlock = SimpleBlock String (Side -> String)
 
+instance Eq SimpleBlock where
+  (SimpleBlock a _) == (SimpleBlock b _) = a == b
+  
 instance Hashable SimpleBlock where
   hashWithSalt salt (SimpleBlock name _) = hashWithSalt salt name
   

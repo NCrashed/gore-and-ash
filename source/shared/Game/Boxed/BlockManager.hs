@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
