@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -13,31 +13,15 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Math.Raycasting.Ray(
-    Ray(..)
-  , newRay
-  , rayOrigin
-  , rayDirection
+module Client.Graphics.Renderable(
+    Renderable(..)
   ) where
   
-import Data.Vec
+import Client.Graphics.GPipe
+import Client.Graphics.Camera
+import Game.LocatedObject
+import Game.BoundedObject
 
--- | Ray is a origin and direction, floats used as they passed to gpu with
--- | minimum payload. 
-data Ray = Ray 
-  -- | Ray origin
-  !(Vec3 Float) 
-  -- | Ray direction, always normalized
-  !(Vec3 Float)
-  
--- | Constructing new ray, used for automatic direction normalization.
-newRay :: Vec3 Float -> Vec3 Float -> Ray
-newRay origin dir = Ray origin (normalize dir)
-
--- | Returs ray origin vector
-rayOrigin :: Ray -> Vec3 Float
-rayOrigin (Ray origin _ ) = origin
-
--- | Returns ray direction vector
-rayDirection :: Ray -> Vec3 Float
-rayDirection (Ray _ direction) = direction
+class (LocatedObject a, BoundedObjected a) => Renderable a where
+  render :: a -> Camera -> FrameBuffer RGBAFormat DepthFormat ()
+  debugRender :: a -> FrameBuffer RGBAFormat DepthFormat ()

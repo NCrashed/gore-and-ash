@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2013-2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -13,13 +13,31 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Client.Graphics.Boxed.Model(
-
+module Math.Ray(
+    Ray(..)
+  , newRay
+  , rayOrigin
+  , rayDirection
   ) where
   
-import Client.Graphics.GPipe
-import Client.Graphics.Renderable
-import Game.Boxed.Model
+import Data.Vec
 
-renderModel :: BoxedModel -> FrameBuffer RGBAFormat DepthFormat ()
-renderModel model = undefined
+-- | Ray is a origin and direction, floats used as they passed to gpu with
+-- | minimum payload. 
+data Ray a = Ray 
+  -- | Ray origin
+  !(Vec3 a) 
+  -- | Ray direction, always normalized
+  !(Vec3 a)
+  
+-- | Constructing new ray, used for automatic direction normalization.
+newRay :: Floating a => Vec3 a -> Vec3 a -> Ray a
+newRay origin dir = Ray origin (normalize dir)
+
+-- | Returs ray origin vector
+rayOrigin :: Ray a -> Vec3 a
+rayOrigin (Ray origin _ ) = origin
+
+-- | Returns ray direction vector
+rayDirection :: Ray a -> Vec3 a
+rayDirection (Ray _ direction) = direction

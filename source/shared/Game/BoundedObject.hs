@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -13,9 +13,11 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Math.Raycasting(
-    module X
+module Game.BoundedObject(
+    BoundedObject(..)
   ) where
   
-import Math.Raycasting.Ray as X
-import Math.Raycasting.Box as X
+import Math.AABB
+
+class BoundedObject a where
+  getBounds :: a -> AABB Float

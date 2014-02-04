@@ -1,4 +1,4 @@
--- Copyright 2013 Anton Gushcha
+-- Copyright 2013-2014 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
 --    Gore&Ash is free software: you can redistribute it and/or modify
@@ -13,13 +13,11 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-module Client.Graphics.Boxed.Model(
-
+{-# LANGUAGE TypeFamilies, MultiParamTypeClasses #-}
+module Math.Collidable(
+    Collidable(..)
   ) where
   
-import Client.Graphics.GPipe
-import Client.Graphics.Renderable
-import Game.Boxed.Model
-
-renderModel :: BoxedModel -> FrameBuffer RGBAFormat DepthFormat ()
-renderModel model = undefined
+class Collidable a b where
+  type CollisionResult a b
+  intersect :: a -> b -> Maybe (CollisionResult a b)
