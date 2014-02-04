@@ -14,12 +14,17 @@
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 module Game.LocatedObject(
-    LocatedObject(..)
+    Location
+  , Rotation
+  , LocatedObject(..)
   )where
   
 import Data.Vec
 import Math.Quaternion
   
+type Location = Vec3 Float
+type Rotation = Quaternion Float
+
 -- | Class describing objects that can be located in "World". 
 -- They have location and rotation, also class defines functions
 -- to translate local to global coordinate system and vice versa.
@@ -31,12 +36,12 @@ import Math.Quaternion
 -- @ forall v . v == toGlobal . toLocal v
 -- @ forall v . toLocal . toGlobal v == v
 class LocatedObject a where
-  getLocation :: a -> Vec3 Float
-  getRotation :: a -> Quaternion Float
-  setLocation :: a -> Vec3 Float -> a
-  setRotation :: a -> Quaternion Float ->  a
-  toLocal  :: a -> Vec3 Float -> Vec3 Float
-  toGlobal :: a -> Vec3 Float -> Vec3 Float
+  getLocation :: a -> Location
+  getRotation :: a -> Rotation
+  setLocation :: a -> Location -> a
+  setRotation :: a -> Rotation ->  a
+  toLocal  :: a -> Location -> Location
+  toGlobal :: a -> Location -> Location
   
   toLocal  o = (+) (getLocation o) . rotateVec (getRotation o)
   toGlobal o = rotateVec (quatInverse (getRotation o)) . (-) (getLocation o)
