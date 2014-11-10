@@ -20,7 +20,7 @@ module Client.Graphics.Texture.Repa(
   , cacheTexture
   ) where
 
-import Client.Graphics.GPipe 
+import Graphics.GPipe 
 import Client.Graphics.Texture.Render 
 import qualified Data.Array.Repa as R
 import qualified Data.Array.Repa.Repr.ForeignPtr as R

@@ -13,14 +13,14 @@
 --
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, DeriveDataTypeable, RankNTypes, FlexibleContexts, TypeFamilies #-}
+{-# LANGUAGE StandaloneDeriving, FlexibleInstances, UndecidableInstances, DeriveDataTypeable, RankNTypes, FlexibleContexts, TypeFamilies #-}
 module Client.Assets.Texture(
     TextureResource(..)
   , TextureResource3D(..)
   , ResourceParams(..) 
   ) where
   
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Client.Assets.Resource
 import Control.Monad.Trans.Either
 import qualified Data.ByteString.Lazy     as BZ
@@ -79,6 +79,16 @@ wrapTexResource io = right . TextureResource =<< liftExceptions io
 
 wrapTex3DResource :: IO t -> EitherT String IO (TextureResource3D t)
 wrapTex3DResource io = right . TextureResource3D =<< liftExceptions io
+
+deriving instance Typeable Texture2D
+deriving instance Typeable Texture1D
+deriving instance Typeable Texture3D
+deriving instance Typeable TextureCube
+deriving instance Typeable AlphaFormat
+deriving instance Typeable LuminanceFormat
+deriving instance Typeable LuminanceAlphaFormat
+deriving instance Typeable RGBFormat
+deriving instance Typeable RGBAFormat
 
 instance Resource (TextureResource (Texture3D AlphaFormat)) where
     data ResourceParams (TextureResource (Texture3D AlphaFormat)) = Par3DAlpha AlphaFormat

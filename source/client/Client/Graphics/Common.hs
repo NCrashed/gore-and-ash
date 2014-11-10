@@ -26,7 +26,7 @@ module Client.Graphics.Common(
     , transform
     ) where
     
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Data.Vec as Vec
     
 paintSolid :: FragmentStream (Color RGBFormat (Fragment Float)) -> FrameBuffer RGBFormat () () -> FrameBuffer RGBFormat () ()

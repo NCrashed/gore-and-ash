@@ -22,7 +22,7 @@ module Client.Graphics.System(
 import Control.Distributed.Process
 import Control.Concurrent (yield)
 
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Data.IORef
 import Graphics.UI.GLUT(
       Window

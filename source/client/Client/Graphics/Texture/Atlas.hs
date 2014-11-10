@@ -28,7 +28,7 @@ module Client.Graphics.Texture.Atlas(
   ) where
   
 import Prelude hiding (lookup)
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Client.Graphics.Texture.Render
 import Client.Graphics.Texture.Repa
 import Client.Assets.Manager

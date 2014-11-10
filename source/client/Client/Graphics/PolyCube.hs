@@ -25,7 +25,7 @@ module Client.Graphics.PolyCube(
     , transformedCube
     ) where
     
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Data.Monoid
 
 import Client.Graphics.Common 

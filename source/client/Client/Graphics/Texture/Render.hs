@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, TypeFamilies #-}
 -- Copyright 2013 Anton Gushcha
 --    This file is part of Gore&Ash.
 --
@@ -22,10 +22,10 @@ module Client.Graphics.Texture.Render(
   , remapCoords
   ) where
   
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Client.Graphics.Common
-import Client.Graphics.GPipe.Inner.Formats (toColor, fromColor)
 import Data.List
+import Data.Functor ((<$>))
 
 -- | Incapsulates textures with different color formats
 data SomeTexture = forall f . (ColorFormat f) => SomeTexture (Texture2D f)
@@ -64,12 +64,13 @@ blitTexture vflip base tex origin size = paintSolidAlpha (textureQuad' vflip bas
 
 -- | Fragment shader to blit one texture.
 textureQuad :: (ColorFormat f) => Bool -> Texture2D f ->  Vec2 Float -> Vec2 Float -> FragmentStream (Color RGBAFormat (Fragment Float))
-textureQuad vflip tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = fmap texturise $ rasterizeFront transformedQuad
+textureQuad vflip tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = texturise <$> rasterizeFront transformedQuad
   where 
     texturise uv@(uvx:.uvy:.()) = if vflip 
       then let uv' = (uvx:.(1-uvy):.()) in texturise' uv' 
       else texturise' uv
-    texturise' uv = ifB (isInside uv) (texColor uv) (toColor $ 0:.0:.0:.1:.())
+      
+    texturise' uv = ifB (isInside uv) (texColor uv) (RGBA (0:.0:.0:.()) 1)
     texColor = toColor . fromColor 0 1 . sample (Sampler Linear Wrap) tex  . remapCoords origin size
     isInside (uvx:.uvy:.()) = uvx >=* toGPU ox &&* uvy >=* toGPU oy &&* uvx <* toGPU (ox+sx) &&* uvy <* toGPU (oy+sy)
 
@@ -77,7 +78,7 @@ textureQuad vflip tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = fmap texturise $ r
 textureQuad' :: (ColorFormat f1, ColorFormat f2) => Bool -> Texture2D f1 -> Texture2D f2
   -> Vec2 Float -> Vec2 Float
   -> FragmentStream (Color RGBAFormat (Fragment Float))
-textureQuad' vflip base tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = fmap texturise $ rasterizeFront transformedQuad
+textureQuad' vflip base tex origin@(ox:.oy:.()) size@(sx:.sy:.()) = texturise <$> rasterizeFront transformedQuad
   where
     texturise uv@(uvx:.uvy:.()) = if vflip 
       then let uv' = (uvx:.(1-uvy):.()) in texturise' uv' 

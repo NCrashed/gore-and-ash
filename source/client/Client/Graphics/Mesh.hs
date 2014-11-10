@@ -21,7 +21,7 @@ module Client.Graphics.Mesh(
   ) where
 
 import Prelude as P  
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Data.Sequence as S
 import Data.Foldable
 import Data.Monoid

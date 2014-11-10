@@ -29,7 +29,7 @@ import Data.Word
 import Data.Maybe
 import Data.Sequence as S
 
-import Client.Graphics.GPipe
+import Graphics.GPipe
 import Client.Graphics.Common
 import Client.Graphics.Mesh
 import Client.Graphics.Texture.Atlas
