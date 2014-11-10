@@ -1,0 +1,9 @@
+[submodule "GPipe"]
+	path = GPipe
+	url = https://github.com/NCrashed/GPipe.git
+[submodule "Vec-Boolean"]
+	path = Vec-Boolean
+	url = https://github.com/NCrashed/Vec-Boolean
+[submodule "OpenGL"]
+	path = OpenGL
+	url = https://github.com/NCrashed/OpenGL
