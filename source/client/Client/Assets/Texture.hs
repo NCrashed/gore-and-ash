@@ -14,6 +14,7 @@
 --    You should have received a copy of the GNU General Public License
 --    along with Gore&Ash.  If not, see <http://www.gnu.org/licenses/>.
 {-# LANGUAGE StandaloneDeriving, FlexibleInstances, UndecidableInstances, DeriveDataTypeable, RankNTypes, FlexibleContexts, TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-orphans#-}
 module Client.Assets.Texture(
     TextureResource(..)
   , TextureResource3D(..)

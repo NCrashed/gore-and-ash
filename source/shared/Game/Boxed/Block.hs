@@ -44,10 +44,11 @@ instance Hashable SomeBlock where
 
 instance Eq SomeBlock where
   (SomeBlock a) == (SomeBlock b) = blockName a == blockName b
-  
+
 instance Ord SomeBlock where
   (SomeBlock a) >= (SomeBlock b) = blockName a >= blockName b
-
+  (SomeBlock a) <= (SomeBlock b) = blockName a <= blockName b
+  
 -- | Returns all textures used by the block.
 blockTextures :: Block a => a -> [String]
 blockTextures block = nub $ blockTexture block <$> [Upward .. ]
